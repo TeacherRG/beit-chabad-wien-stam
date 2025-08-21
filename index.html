@@ -1,826 +1,517 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mezuzot & Tefillin Prüfung - Wien</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            padding: 40px;
-            max-width: 500px;
-            width: 100%;
-            animation: slideUp 0.6s ease-out;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .header h1 {
-            color: #2d3748;
-            font-size: 28px;
-            margin-bottom: 8px;
-            font-weight: 700;
-        }
-
-        .header p {
-            color: #718096;
-            font-size: 16px;
-        }
-
-        .form-group {
-            margin-bottom: 25px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #2d3748;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        input, select, textarea {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            background: #f7fafc;
-        }
-
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: #667eea;
-            background: white;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .checkbox-group {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-top: 10px;
-        }
-
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            padding: 15px 20px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            background: #f7fafc;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .checkbox-item:hover {
-            border-color: #667eea;
-            background: #edf2f7;
-            transform: translateY(-2px);
-        }
-
-        .checkbox-item.selected {
-            border-color: #667eea;
-            background: #667eea;
-            color: white;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-        }
-
-        .checkbox-item input[type="checkbox"] {
-            width: auto;
-            margin-right: 12px;
-            transform: scale(1.2);
-        }
-
-        .checkbox-item label {
-            margin: 0;
-            cursor: pointer;
-            font-weight: 500;
-            font-size: 16px;
-        }
-
-        .quantity-group {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        .quantity-item {
-            display: none;
-            animation: slideDown 0.3s ease-out;
-        }
-
-        .quantity-item.show {
-            display: block;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .quantity-item label {
-            font-size: 14px;
-            color: #4a5568;
-            margin-bottom: 5px;
-        }
-
-        .quantity-item input {
-            text-align: center;
-            font-weight: bold;
-        }
-
-        .submit-btn {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 20px;
-        }
-
-        .submit-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-        }
-
-        .submit-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .success-message {
-            background: #c6f6d5;
-            color: #22543d;
-            padding: 15px 20px;
-            border-radius: 12px;
-            margin-top: 20px;
-            text-align: center;
-            font-weight: 500;
-            border: 2px solid #9ae6b4;
-        }
-
-        .error-message {
-            background: #fed7d7;
-            color: #c53030;
-            padding: 15px 20px;
-            border-radius: 12px;
-            margin-top: 20px;
-            text-align: center;
-            font-weight: 500;
-            border: 2px solid #fc8181;
-        }
-
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #ffffff;
-            border-radius: 50%;
-            border-top-color: transparent;
-            animation: spin 1s ease-in-out infinite;
-            margin-right: 10px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .info-box {
-            background: #ebf8ff;
-            border: 2px solid #90cdf4;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 25px;
-            color: #2a4365;
-        }
-
-        .info-box h3 {
-            margin-bottom: 10px;
-            color: #2c5282;
-        }
-
-        .info-box ul {
-            list-style-position: inside;
-            line-height: 1.6;
-        }
-
-        .admin-panel {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-        }
-
-        .admin-btn {
-            background: #2d3748;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            cursor: pointer;
-            font-size: 18px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            transition: all 0.3s ease;
-        }
-
-        .admin-btn:hover {
-            background: #4a5568;
-            transform: scale(1.1);
-        }
-
-        .admin-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 2000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .admin-content {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            max-width: 800px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-
-        .admin-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .close-btn {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #666;
-        }
-
-        .bookings-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        .bookings-table th,
-        .bookings-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .bookings-table th {
-            background: #f7fafc;
-            font-weight: 600;
-        }
-
-        .bookings-table tbody tr:hover {
-            background: #f7fafc;
-        }
-
-        .password-form {
-            text-align: center;
-            padding: 20px;
-        }
-
-        .password-input {
-            padding: 12px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            margin: 10px;
-            font-size: 16px;
-        }
-
-        .login-btn {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .stat-card {
-            background: #f7fafc;
-            padding: 20px;
-            border-radius: 12px;
-            text-align: center;
-        }
-
-        .stat-number {
-            font-size: 24px;
-            font-weight: bold;
-            color: #667eea;
-        }
-
-        .stat-label {
-            font-size: 14px;
-            color: #666;
-            margin-top: 5px;
-        }
-
-        @media (max-width: 600px) {
-            .container {
-                padding: 30px 20px;
-                margin: 10px;
-            }
-            
-            .quantity-group {
-                grid-template-columns: 1fr;
-            }
-
-            .admin-content {
-                width: 95%;
-                padding: 20px;
-            }
-
-            .bookings-table {
-                font-size: 14px;
-            }
-
-            .stats {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mezuzot & Tefillin Prüfung - Wien</title>
+  <style>
+    /* === your existing styles unchanged (trimmed for brevity) === */
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+    .container{background:#fff;border-radius:20px;box-shadow:0 20px 40px rgba(0,0,0,.1);padding:40px;max-width:500px;width:100%;animation:slideUp .6s ease-out}
+    @keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+    .header{text-align:center;margin-bottom:30px}
+    .header h1{color:#2d3748;font-size:28px;margin-bottom:8px;font-weight:700}
+    .header p{color:#718096;font-size:16px}
+    .form-group{margin-bottom:25px}
+    label{display:block;margin-bottom:8px;color:#2d3748;font-weight:600;font-size:14px}
+    input,select,textarea{width:100%;padding:12px 16px;border:2px solid #e2e8f0;border-radius:12px;font-size:16px;transition:.3s;background:#f7fafc}
+    input:focus,select:focus,textarea:focus{outline:none;border-color:#667eea;background:#fff;box-shadow:0 0 0 3px rgba(102,126,234,.1)}
+    .checkbox-group{display:flex;flex-direction:column;gap:15px;margin-top:10px}
+    .checkbox-item{display:flex;align-items:center;padding:15px 20px;border:2px solid #e2e8f0;border-radius:12px;background:#f7fafc;cursor:pointer;transition:.3s}
+    .checkbox-item:hover{border-color:#667eea;background:#edf2f7;transform:translateY(-2px)}
+    .checkbox-item.selected{border-color:#667eea;background:#667eea;color:#fff;box-shadow:0 4px 12px rgba(102,126,234,.3)}
+    .checkbox-item input[type="checkbox"]{width:auto;margin-right:12px;transform:scale(1.2)}
+    .checkbox-item label{margin:0;cursor:pointer;font-weight:500;font-size:16px}
+    .quantity-group{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:15px}
+    .quantity-item{display:none;animation:slideDown .3s ease-out}
+    .quantity-item.show{display:block}
+    @keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+    .quantity-item label{font-size:14px;color:#4a5568;margin-bottom:5px}
+    .quantity-item input{text-align:center;font-weight:bold}
+    .submit-btn{width:100%;padding:15px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;transition:.3s;margin-top:20px}
+    .submit-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 25px rgba(102,126,234,.4)}
+    .submit-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+    .success-message{background:#c6f6d5;color:#22543d;padding:15px 20px;border-radius:12px;margin-top:20px;text-align:center;font-weight:500;border:2px solid #9ae6b4}
+    .error-message{background:#fed7d7;color:#c53030;padding:15px 20px;border-radius:12px;margin-top:20px;text-align:center;font-weight:500;border:2px solid #fc8181}
+    .loading{display:inline-block;width:20px;height:20px;border:3px solid #fff;border-radius:50%;border-top-color:transparent;animation:spin 1s ease-in-out infinite;margin-right:10px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .info-box{background:#ebf8ff;border:2px solid #90cdf4;border-radius:12px;padding:20px;margin-bottom:25px;color:#2a4365}
+    .info-box h3{margin-bottom:10px;color:#2c5282}
+    .info-box ul{list-style-position:inside;line-height:1.6}
+    .admin-panel{position:fixed;top:20px;right:20px;z-index:1000}
+    .admin-btn{background:#2d3748;color:#fff;border:none;border-radius:50%;width:50px;height:50px;cursor:pointer;font-size:18px;box-shadow:0 4px 12px rgba(0,0,0,.3);transition:.3s}
+    .admin-btn:hover{background:#4a5568;transform:scale(1.1)}
+    .admin-modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.8);z-index:2000;display:none;align-items:center;justify-content:center}
+    .admin-content{background:#fff;border-radius:20px;padding:30px;max-width:800px;width:90%;max-height:80vh;overflow-y:auto}
+    .admin-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+    .close-btn{background:none;border:none;font-size:24px;cursor:pointer;color:#666}
+    .bookings-table{width:100%;border-collapse:collapse;margin-top:20px}
+    .bookings-table th,.bookings-table td{padding:12px;text-align:left;border-bottom:1px solid #e2e8f0}
+    .bookings-table th{background:#f7fafc;font-weight:600}
+    .bookings-table tbody tr:hover{background:#f7fafc}
+    .password-form{text-align:center;padding:20px}
+    .password-input{padding:12px;border:2px solid #e2e8f0;border-radius:8px;margin:10px;font-size:16px}
+    .login-btn{background:#667eea;color:#fff;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-size:16px}
+    .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px;margin-bottom:20px}
+    .stat-card{background:#f7fafc;padding:20px;border-radius:12px;text-align:center}
+    .stat-number{font-size:24px;font-weight:bold;color:#667eea}
+    .stat-label{font-size:14px;color:#666;margin-top:5px}
+    @media (max-width:600px){.container{padding:30px 20px;margin:10px}.quantity-group{grid-template-columns:1fr}.admin-content{width:95%;padding:20px}.bookings-table{font-size:14px}.stats{grid-template-columns:1fr 1fr}}
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1> Mezuzot & Tefillin Prüfung</h1>
-            <p>Professionelle Überprüfung in Wien, Beit Chabad</p>
-        </div>
-
-        <div class="info-box">
-            <h3>ℹ️ Informationen zum Termin:</h3>
-            <ul>
-                <li><strong>Datum:</strong> 7. September 2025</li>
-                <li><strong>Zeit:</strong> 10:00 - 18:00 Uhr</li>
-                <li><strong>Ort:</strong> Wien, Österreich</li>
-                <li><strong>Dauer:</strong> ~30 Minuten pro Überprüfung</li>
-            </ul>
-        </div>
-
-        <form id="bookingForm">
-            <div class="form-group">
-                <label for="time">🕐 Wählen Sie Ihre gewünschte Uhrzeit *</label>
-                <select id="time" name="time" required>
-                    <option value="">Bitte wählen Sie eine Zeit</option>
-                    <option value="10:00">10:00 Uhr</option>
-                    <option value="10:30">10:30 Uhr</option>
-                    <option value="11:00">11:00 Uhr</option>
-                    <option value="11:30">11:30 Uhr</option>
-                    <option value="12:00">12:00 Uhr</option>
-                    <option value="12:30">12:30 Uhr</option>
-                    <option value="13:00">13:00 Uhr</option>
-                    <option value="13:30">13:30 Uhr</option>
-                    <option value="14:00">14:00 Uhr</option>
-                    <option value="14:30">14:30 Uhr</option>
-                    <option value="15:00">15:00 Uhr</option>
-                    <option value="15:30">15:30 Uhr</option>
-                    <option value="16:00">16:00 Uhr</option>
-                    <option value="16:30">16:30 Uhr</option>
-                    <option value="17:00">17:00 Uhr</option>
-                    <option value="17:30">17:30 Uhr</option>
-                    <option value="18:00">18:00 Uhr</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>📋 Was möchten Sie überprüfen lassen? *</label>
-                <div class="checkbox-group">
-                    <div class="checkbox-item" onclick="toggleCheckbox('mezuzot')">
-                        <input type="checkbox" id="mezuzot" name="items" value="mezuzot">
-                        <label for="mezuzot">🏠 Mezuzot</label>
-                    </div>
-                    <div class="checkbox-item" onclick="toggleCheckbox('tefillin')">
-                        <input type="checkbox" id="tefillin" name="items" value="tefillin">
-                        <label for="tefillin">📿 Tefillin</label>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>🔢 Wie viele möchten Sie überprüfen lassen?</label>
-                <div class="quantity-group">
-                    <div class="quantity-item" id="mezuzotQuantity">
-                        <label for="mezuzotCount">Anzahl Mezuzot</label>
-                        <input type="number" id="mezuzotCount" name="mezuzotCount" min="1" max="50" value="1">
-                    </div>
-                    <div class="quantity-item" id="tefillinQuantity">
-                        <label for="tefillinCount">Anzahl Tefillin</label>
-                        <input type="number" id="tefillinCount" name="tefillinCount" min="1" max="10" value="1">
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="name">👤 Ihr Name *</label>
-                <input type="text" id="name" name="name" required placeholder="Vor- und Nachname">
-            </div>
-
-            <div class="form-group">
-                <label for="email">📧 E-Mail *</label>
-                <input type="email" id="email" name="email" required placeholder="ihre.email@beispiel.com">
-            </div>
-
-            <div class="form-group">
-                <label for="phone">📱 Telefonnummer</label>
-                <input type="tel" id="phone" name="phone" placeholder="+43 xxx xxx xxxx">
-            </div>
-
-            <div class="form-group">
-                <label for="notes">💭 Besondere Wünsche oder Anmerkungen</label>
-                <textarea id="notes" name="notes" rows="3" placeholder="Teilen Sie uns mit, falls Sie besondere Wünsche haben..."></textarea>
-            </div>
-
-            <button type="submit" class="submit-btn" id="submitBtn">
-                📝 Termin vereinbaren
-            </button>
-        </form>
-
-        <div id="message"></div>
+  <div class="container">
+    <div class="header">
+      <h1>📿 Mezuzot & Tefillin Prüfung</h1>
+      <p>Professionelle Überprüfung in Wien</p>
     </div>
 
-    <!-- Admin-Panel -->
-    <div class="admin-panel">
-        <button class="admin-btn" onclick="openAdminPanel()" title="Admin-Panel">⚙️</button>
+    <div class="info-box">
+      <h3>ℹ️ Informationen zum Termin:</h3>
+      <ul>
+        <li><strong>Datum:</strong> 7. September 2025</li>
+        <li><strong>Zeit:</strong> 10:00 - 18:00 Uhr</li>
+        <li><strong>Ort:</strong> Wien, Österreich</li>
+        <li><strong>Dauer:</strong> ~30 Minuten pro Überprüfung</li>
+      </ul>
     </div>
 
-    <!-- Admin Modal -->
-    <div class="admin-modal" id="adminModal">
-        <div class="admin-content">
-            <div class="admin-header">
-                <h2>👨‍💻 Admin-Panel</h2>
-                <button class="close-btn" onclick="closeAdminPanel()">✕</button>
-            </div>
-            
-            <!-- Login Form -->
-            <div id="passwordForm" class="password-form">
-                <h3>Passwort eingeben</h3>
-                <input type="password" id="adminPassword" class="password-input" placeholder="Passwort">
-                <br>
-                <button class="login-btn" onclick="adminLogin()">Anmelden</button>
-            </div>
+    <form id="bookingForm" novalidate>
+      <div class="form-group">
+        <label for="time">🕐 Wählen Sie Ihre gewünschte Uhrzeit *</label>
+        <select id="time" name="time" required>
+          <option value="">Bitte wählen Sie eine Zeit</option>
+          <!-- 17 Slots: 10:00–18:00 im 30-Min-Takt -->
+          <option value="10:00">10:00 Uhr</option>
+          <option value="10:30">10:30 Uhr</option>
+          <option value="11:00">11:00 Uhr</option>
+          <option value="11:30">11:30 Uhr</option>
+          <option value="12:00">12:00 Uhr</option>
+          <option value="12:30">12:30 Uhr</option>
+          <option value="13:00">13:00 Uhr</option>
+          <option value="13:30">13:30 Uhr</option>
+          <option value="14:00">14:00 Uhr</option>
+          <option value="14:30">14:30 Uhr</option>
+          <option value="15:00">15:00 Uhr</option>
+          <option value="15:30">15:30 Uhr</option>
+          <option value="16:00">16:00 Uhr</option>
+          <option value="16:30">16:30 Uhr</option>
+          <option value="17:00">17:00 Uhr</option>
+          <option value="17:30">17:30 Uhr</option>
+          <option value="18:00">18:00 Uhr</option>
+        </select>
+      </div>
 
-            <!-- Admin Content -->
-            <div id="adminContent" style="display: none;">
-                <!-- Statistics -->
-                <div class="stats">
-                    <div class="stat-card">
-                        <div class="stat-number" id="totalBookings">0</div>
-                        <div class="stat-label">Termine gesamt</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="mezuzotTotal">0</div>
-                        <div class="stat-label">Mezuzot gesamt</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="tefillinTotal">0</div>
-                        <div class="stat-label">Tefillin gesamt</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="availableSlots">17</div>
-                        <div class="stat-label">Freie Termine</div>
-                    </div>
-                </div>
-
-                <!-- Bookings Table -->
-                <table class="bookings-table">
-                    <thead>
-                        <tr>
-                            <th>Anmeldung</th>
-                            <th>Name</th>
-                            <th>E-Mail</th>
-                            <th>Telefon</th>
-                            <th>Termin</th>
-                            <th>Prüfung</th>
-                            <th>Anzahl</th>
-                            <th>Anmerkungen</th>
-                        </tr>
-                    </thead>
-                    <tbody id="bookingsTableBody">
-                        <!-- Data will be populated by JavaScript -->
-                    </tbody>
-                </table>
-            </div>
+      <div class="form-group">
+        <label>📋 Was möchten Sie überprüfen lassen? *</label>
+        <div class="checkbox-group">
+          <div class="checkbox-item" data-target="mezuzotQuantity">
+            <input type="checkbox" id="mezuzot" name="items" value="mezuzot" />
+            <label for="mezuzot">🏠 Mezuzot</label>
+          </div>
+          <div class="checkbox-item" data-target="tefillinQuantity">
+            <input type="checkbox" id="tefillin" name="items" value="tefillin" />
+            <label for="tefillin">📿 Tefillin</label>
+          </div>
         </div>
+      </div>
+
+      <div class="form-group">
+        <label>🔢 Wie viele möchten Sie überprüfen lassen?</label>
+        <div class="quantity-group">
+          <div class="quantity-item" id="mezuzotQuantity">
+            <label for="mezuzotCount">Anzahl Mezuzot (max. 5)</label>
+            <input type="number" id="mezuzotCount" name="mezuzotCount" min="1" max="5" value="1" />
+          </div>
+          <div class="quantity-item" id="tefillinQuantity">
+            <label for="tefillinCount">Anzahl Tefillin (max. 2)</label>
+            <input type="number" id="tefillinCount" name="tefillinCount" min="1" max="10" value="1" />
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="name">👤 Ihr Name *</label>
+        <input type="text" id="name" name="name" required placeholder="Vor- und Nachname" />
+      </div>
+
+      <div class="form-group">
+        <label for="email">📧 E-Mail *</label>
+        <input type="email" id="email" name="email" required placeholder="ihre.email@beispiel.com" />
+      </div>
+
+      <div class="form-group">
+        <label for="phone">📱 Telefonnummer</label>
+        <input type="tel" id="phone" name="phone" placeholder="+43 xxx xxx xxxx" />
+      </div>
+
+      <div class="form-group">
+        <label for="notes">💭 Besondere Wünsche oder Anmerkungen</label>
+        <textarea id="notes" name="notes" rows="3" placeholder="Teilen Sie uns mit, falls Sie besondere Wünsche haben..."></textarea>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submitBtn" disabled>📝 Termin vereinbaren</button>
+    </form>
+
+    <div id="message" aria-live="polite"></div>
+  </div>
+
+  <!-- Admin-Panel -->
+  <div class="admin-panel">
+    <button class="admin-btn" id="openAdminBtn" title="Admin-Panel">⚙️</button>
+  </div>
+
+  <!-- Admin Modal -->
+  <div class="admin-modal" id="adminModal" aria-hidden="true">
+    <div class="admin-content">
+      <div class="admin-header">
+        <h2>👨‍💻 Admin-Panel</h2>
+        <button class="close-btn" id="closeAdminBtn" aria-label="Schließen">✕</button>
+      </div>
+
+      <!-- Login Form -->
+      <div id="passwordForm" class="password-form">
+        <h3>Passwort eingeben</h3>
+        <input type="password" id="adminPassword" class="password-input" placeholder="Passwort"/>
+        <br/>
+        <button class="login-btn" id="adminLoginBtn">Anmelden</button>
+      </div>
+
+      <!-- Admin Content -->
+      <div id="adminContent" style="display:none;">
+        <div class="stats">
+          <div class="stat-card">
+            <div class="stat-number" id="totalBookings">0</div>
+            <div class="stat-label">Termine gesamt</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="mezuzotTotal">0</div>
+            <div class="stat-label">Mezuzot gesamt</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="tefillinTotal">0</div>
+            <div class="stat-label">Tefillin gesamt</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="availableSlots">17</div>
+            <div class="stat-label">Freie Termine</div>
+          </div>
+        </div>
+
+        <table class="bookings-table">
+          <thead>
+            <tr>
+              <th>Anmeldung</th>
+              <th>Name</th>
+              <th>E-Mail</th>
+              <th>Telefon</th>
+              <th>Termin</th>
+              <th>Prüfung</th>
+              <th>Anzahl</th>
+              <th>Anmerkungen</th>
+            </tr>
+          </thead>
+          <tbody id="bookingsTableBody">
+            <tr><td colspan="8" style="text-align:center;color:#666;">Noch keine Termine</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
+  </div>
 
-    <script>
-        let bookingsData = [];
-        let bookedTimes = [];
-        const ADMIN_PASSWORD = 'mezuzot2025';
+  <script>
+    /********************
+     * CONFIG
+     ********************/
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxIGDSwQ6UWebJnbsK_f68fCzFd0hrBw9e2b46ehUS9Cd3IduggUxWmGaV6spghitUFIQ/exec';
+    // TODO: Move this server-side; client-side passwords are not secure.
+    const ADMIN_PASSWORD = 'mezuzot2025';
 
-        // Toggle checkbox selection
-        function toggleCheckbox(itemType) {
-            const checkbox = document.getElementById(itemType);
-            const checkboxItem = checkbox.parentElement;
-            const quantityItem = document.getElementById(itemType + 'Quantity');
-            
-            checkbox.checked = !checkbox.checked;
-            
-            if (checkbox.checked) {
-                checkboxItem.classList.add('selected');
-                quantityItem.classList.add('show');
-            } else {
-                checkboxItem.classList.remove('selected');
-                quantityItem.classList.remove('show');
-            }
-            
-            updateSubmitButton();
-        }
+    /********************
+     * STATE (with persistence)
+     ********************/
+    let bookingsData = [];
+    let bookedTimes = [];
 
-        // Update submit button state
-        function updateSubmitButton() {
-            const time = document.getElementById('time').value;
-            const mezuzotChecked = document.getElementById('mezuzot').checked;
-            const tefillinChecked = document.getElementById('tefillin').checked;
-            const name = document.getElementById('name').value;
-            const email = document.getElementById('email').value;
-            
-            const submitBtn = document.getElementById('submitBtn');
-            
-            if (time && (mezuzotChecked || tefillinChecked) && name && email) {
-                submitBtn.disabled = false;
-            } else {
-                submitBtn.disabled = true;
-            }
-        }
+    const LS_KEYS = {
+      bookings: 'mezuzot_bookings_v1',
+      bookedTimes: 'mezuzot_booked_times_v1'
+    };
 
-        // Form submission
-        document.getElementById('bookingForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
+    function loadState() {
+      try {
+        bookingsData = JSON.parse(localStorage.getItem(LS_KEYS.bookings)) || [];
+        bookedTimes = JSON.parse(localStorage.getItem(LS_KEYS.bookedTimes)) || [];
+      } catch {
+        bookingsData = [];
+        bookedTimes = [];
+      }
+    }
 
-            const submitBtn = document.getElementById('submitBtn');
-            const originalText = submitBtn.innerHTML;
-            
-            // Show loading
-            submitBtn.innerHTML = '<span class="loading"></span>Wird gesendet...';
-            submitBtn.disabled = true;
+    function saveState() {
+      localStorage.setItem(LS_KEYS.bookings, JSON.stringify(bookingsData));
+      localStorage.setItem(LS_KEYS.bookedTimes, JSON.stringify(bookedTimes));
+    }
 
-            // Get form data
-            const formData = {
-                time: document.getElementById('time').value,
-                mezuzot: document.getElementById('mezuzot').checked,
-                tefillin: document.getElementById('tefillin').checked,
-                mezuzotCount: document.getElementById('mezuzot').checked ? 
-                    parseInt(document.getElementById('mezuzotCount').value) : 0,
-                tefillinCount: document.getElementById('tefillin').checked ? 
-                    parseInt(document.getElementById('tefillinCount').value) : 0,
-                name: document.getElementById('name').value,
-                email: document.getElementById('email').value,
-                phone: document.getElementById('phone').value,
-                notes: document.getElementById('notes').value,
-                timestamp: new Date().toISOString()
-            };
+    /********************
+     * UTIL
+     ********************/
+    function formatDateTime(date) {
+      return new Date(date).toLocaleString('de-DE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
 
-            try {
-                // Simulate booking
-                await simulateBooking(formData);
-                
-                // Add to booked times
-                bookedTimes.push(formData.time);
-                
-                // Remove time from select
-                const timeSelect = document.getElementById('time');
-                const optionToRemove = timeSelect.querySelector(`option[value="${formData.time}"]`);
-                if (optionToRemove) {
-                    optionToRemove.remove();
-                }
-                
-                // Show success message
-                const items = [];
-                if (formData.mezuzot) items.push(`${formData.mezuzotCount} Mezuzot`);
-                if (formData.tefillin) items.push(`${formData.tefillinCount} Tefillin`);
-                
-                showMessage(
-                    `🎉 Perfekt! Ihr Termin wurde bestätigt.<br>
-                     📅 <strong>7. September 2025 um ${formData.time} Uhr</strong><br>
-                     📋 Überprüfung: ${items.join(' und ')}<br>
-                     📧 Bestätigung wurde an ${formData.email} gesendet.`, 
-                    'success'
-                );
+    function showMessage(text, type) {
+      const messageDiv = document.getElementById('message');
+      messageDiv.className = type === 'error' ? 'error-message' : 'success-message';
+      messageDiv.innerHTML = text;
+      setTimeout(() => {
+        messageDiv.innerHTML = '';
+        messageDiv.className = '';
+      }, 15000);
+    }
 
-                // Reset form
-                resetForm();
+    function setSubmitLoading(loading) {
+      const btn = document.getElementById('submitBtn');
+      if (loading) {
+        btn.dataset.prevText = btn.innerHTML;
+        btn.innerHTML = '<span class="loading"></span>Wird gesendet...';
+        btn.disabled = true;
+      } else {
+        btn.innerHTML = btn.dataset.prevText || '📝 Termin vereinbaren';
+      }
+    }
 
-            } catch (error) {
-                showMessage('❌ Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.', 'error');
-                console.error('Booking error:', error);
-            }
+    function disableBookedOptions() {
+      const timeSelect = document.getElementById('time');
+      [...timeSelect.options].forEach(opt => {
+        if (!opt.value) return;
+        opt.disabled = bookedTimes.includes(opt.value);
+      });
+    }
 
-            // Restore button
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = true;
-        });
+    function updateAdminStats() {
+      const totalMezuzot = bookingsData.reduce((sum, b) => sum + (b.mezuzot ? b.mezuzotCount : 0), 0);
+      const totalTefillin = bookingsData.reduce((sum, b) => sum + (b.tefillin ? b.tefillinCount : 0), 0);
+      const availableSlots = 17 - bookedTimes.length;
 
-        // Simulate booking
-        async function simulateBooking(data) {
-            console.log('Booking data:', data);
-            
-            bookingsData.push({
-                id: Date.now(),
-                bookingDate: new Date(),
-                ...data
-            });
-            
-            // Simulate network delay
-            await new Promise(resolve => setTimeout(resolve, 2000));
-        }
+      document.getElementById('totalBookings').textContent = bookingsData.length;
+      document.getElementById('mezuzotTotal').textContent = totalMezuzot;
+      document.getElementById('tefillinTotal').textContent = totalTefillin;
+      document.getElementById('availableSlots').textContent = Math.max(availableSlots, 0);
+    }
 
-        // Reset form
-        function resetForm() {
-            document.getElementById('bookingForm').reset();
-            
-            // Reset checkboxes
-            document.querySelectorAll('.checkbox-item').forEach(item => {
-                item.classList.remove('selected');
-            });
-            
-            document.querySelectorAll('.quantity-item').forEach(item => {
-                item.classList.remove('show');
-            });
-            
-            updateSubmitButton();
-        }
+    function loadBookingsTable() {
+      const tbody = document.getElementById('bookingsTableBody');
+      tbody.innerHTML = '';
 
-        // Show message
-        function showMessage(text, type) {
-            const messageDiv = document.getElementById('message');
-            messageDiv.className = type === 'error' ? 'error-message' : 'success-message';
-            messageDiv.innerHTML = text;
-            
-            setTimeout(() => {
-                messageDiv.innerHTML = '';
-                messageDiv.className = '';
-            }, 15000);
-        }
+      if (bookingsData.length === 0) {
+        const row = document.createElement('tr');
+        row.innerHTML = '<td colspan="8" style="text-align:center;color:#666;">Noch keine Termine</td>';
+        tbody.appendChild(row);
+        return;
+      }
 
-        // Admin functions
-        function openAdminPanel() {
-            document.getElementById('adminModal').style.display = 'flex';
-        }
+      const sorted = [...bookingsData].sort((a, b) => new Date(b.bookingDate) - new Date(a.bookingDate));
+      for (const booking of sorted) {
+        const items = [];
+        if (booking.mezuzot) items.push('Mezuzot');
+        if (booking.tefillin) items.push('Tefillin');
 
-        function closeAdminPanel() {
-            document.getElementById('adminModal').style.display = 'none';
-            document.getElementById('passwordForm').style.display = 'block';
-            document.getElementById('adminContent').style.display = 'none';
-            document.getElementById('adminPassword').value = '';
-        }
+        const quantities = [];
+        if (booking.mezuzot) quantities.push(`${booking.mezuzotCount} M`);
+        if (booking.tefillin) quantities.push(`${booking.tefillinCount} T`);
 
-        function adminLogin() {
-            const password = document.getElementById('adminPassword').value;
-            
-            if (password === ADMIN_PASSWORD) {
-                document.getElementById('passwordForm').style.display = 'none';
-                document.getElementById('adminContent').style.display = 'block';
-                loadAdminData();
-            } else {
-                alert('❌ Falsches Passwort!');
-                document.getElementById('adminPassword').value = '';
-            }
-        }
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${formatDateTime(booking.bookingDate)}</td>
+          <td><strong>${booking.name}</strong></td>
+          <td><a href="mailto:${booking.email}">${booking.email}</a></td>
+          <td>${booking.phone || 'Nicht angegeben'}</td>
+          <td><strong>7.9.2025 - ${booking.time}</strong></td>
+          <td>${items.join(', ') || '—'}</td>
+          <td>${quantities.join(', ') || '—'}</td>
+          <td>${booking.notes || 'Keine'}</td>
+        `;
+        tbody.appendChild(tr);
+      }
+    }
 
-        function loadAdminData() {
-            updateAdminStats();
-            loadBookingsTable();
-        }
+    function updateSubmitButton() {
+      const time = document.getElementById('time').value;
+      const mezuzotChecked = document.getElementById('mezuzot').checked;
+      const tefillinChecked = document.getElementById('tefillin').checked;
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
 
-        function updateAdminStats() {
-            const totalMezuzot = bookingsData.reduce((sum, booking) => sum + booking.mezuzotCount, 0);
-            const totalTefillin = bookingsData.reduce((sum, booking) => sum + booking.tefillinCount, 0);
-            const availableSlots = 17 - bookedTimes.length;
-            
-            document.getElementById('totalBookings').textContent = bookingsData.length;
-            document.getElementById('mezuzotTotal').textContent = totalMezuzot;
-            document.getElementById('tefillinTotal').textContent = totalTefillin;
-            document.getElementById('availableSlots').textContent = availableSlots;
-        }
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = !(time && (mezuzotChecked || tefillinChecked) && name && email);
+    }
 
-        function loadBookingsTable() {
-            const tbody = document.getElementById('bookingsTableBody');
-            tbody.innerHTML = '';
-            
-            const sortedBookings = [...bookingsData].sort((a, b) => 
-                new Date(b.bookingDate) - new Date(a.bookingDate)
-            );
-            
-            sortedBookings.forEach(booking => {
-                const items = [];
-                if (booking.mezuzot) items.push('Mezuzot');
-                if (booking.tefillin) items.push('Tefillin');
-                
-                const quantities = [];
-                if (booking.mezuzot) quantities.push(`${booking.mezuzotCount} M`);
-                if (booking.tefillin) quantities.push(`${booking.tefillinCount} T`);
-                
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${formatDateTime(booking.bookingDate)}</td>
-                    <td><strong>${booking.name}</strong></td>
-                    <td><a href="mailto:${booking.email}">${booking.email}</a></td>
-                    <td>${booking.phone || 'Nicht angegeben'}</td>
-                    <td><strong>7.9.2025 - ${booking.time}</strong></td>
-                    <td>${items.join(', ')}</td>
-                    <td>${quantities.join(', ')}</td>
-                    <td>${booking.notes || 'Keine'}</td>
-                `;
-                tbody.appendChild(row);
-            });
-            
-            if (bookingsData.length === 0) {
-                const row = document.createElement('tr');
-                row.innerHTML = '<td colspan="8" style="text-align: center; color: #666;">Noch keine Termine</td>';
-                tbody.appendChild(row);
-            }
-        }
+    function resetForm() {
+      document.getElementById('bookingForm').reset();
+      document.querySelectorAll('.checkbox-item').forEach(item => item.classList.remove('selected'));
+      document.querySelectorAll('.quantity-item').forEach(item => item.classList.remove('show'));
+      updateSubmitButton();
+    }
 
-        function formatDateTime(date) {
-            return new Date(date).toLocaleString('de-DE', {
-                day: '2-digit',
-                month: '2-digit', 
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        }
+    /********************
+     * BACKEND CALL
+     ********************/
+    async function submitToGoogleSheets(data) {
+      const res = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      let result;
+      try {
+        result = await res.json();
+      } catch {
+        throw new Error('Ungültige Antwort vom Server.');
+      }
+      if (!res.ok || result.status !== 'success') {
+        throw new Error(result?.message || 'Serverfehler.');
+      }
+      return result;
+    }
 
-        // Event listeners
-        document.getElementById('time').addEventListener('change', updateSubmitButton);
-        document.getElementById('name').addEventListener('input', updateSubmitButton);
-        document.getElementById('email').addEventListener('input', updateSubmitButton);
+    /********************
+     * EVENT HANDLERS
+     ********************/
+    // Toggle checkbox + quantity visibility (delegate to handle both)
+    document.querySelectorAll('.checkbox-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        // prevent double toggle when clicking the input itself
+        if (e.target.tagName.toLowerCase() === 'input') return;
+        const input = item.querySelector('input[type="checkbox"]');
+        input.checked = !input.checked;
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            updateSubmitButton();
-        });
-    </script>
+        const targetId = item.getAttribute('data-target');
+        const quantityEl = document.getElementById(targetId);
+        item.classList.toggle('selected', input.checked);
+        quantityEl.classList.toggle('show', input.checked);
+
+        updateSubmitButton();
+      });
+    });
+
+    // Keep buttons state in sync
+    document.getElementById('time').addEventListener('change', updateSubmitButton);
+    document.getElementById('name').addEventListener('input', updateSubmitButton);
+    document.getElementById('email').addEventListener('input', updateSubmitButton);
+
+    // Also update when quantities change (for validation)
+    document.getElementById('mezuzotCount').addEventListener('input', updateSubmitButton);
+    document.getElementById('tefillinCount').addEventListener('input', updateSubmitButton);
+
+    // Submit
+    document.getElementById('bookingForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const time = document.getElementById('time').value;
+      const mezuzot = document.getElementById('mezuzot').checked;
+      const tefillin = document.getElementById('tefillin').checked;
+      const mezuzotCount = mezuzot ? Math.max(1, Math.min(5, parseInt(document.getElementById('mezuzotCount').value || '1', 10))) : 0;
+      const tefillinCount = tefillin ? Math.max(1, Math.min(10, parseInt(document.getElementById('tefillinCount').value || '1', 10))) : 0;
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const notes = document.getElementById('notes').value.trim();
+
+      // Guardrails
+      if (!time) return showMessage('Bitte wählen Sie eine Uhrzeit.', 'error');
+      if (!(mezuzot || tefillin)) return showMessage('Bitte wählen Sie mindestens eine Prüfung (Mezuzot oder Tefillin).', 'error');
+      if (bookedTimes.includes(time)) return showMessage('Dieser Termin ist soeben vergeben worden. Bitte wählen Sie eine andere Zeit.', 'error');
+
+      const formData = {
+        time, mezuzot, tefillin,
+        mezuzotCount, tefillinCount,
+        name, email, phone, notes,
+        timestamp: new Date().toISOString(),
+        bookingDate: new Date().toISOString()
+      };
+
+      setSubmitLoading(true);
+
+      try {
+        // 1) Persist remotely
+        await submitToGoogleSheets(formData);
+
+        // 2) Update local state
+        bookingsData.push({ id: Date.now(), ...formData });
+        bookedTimes.push(time);
+        saveState();
+
+        // 3) Update UI
+        disableBookedOptions();
+        const items = [
+          mezuzot ? `${mezuzotCount} Mezuzot` : null,
+          tefillin ? `${tefillinCount} Tefillin` : null
+        ].filter(Boolean);
+
+        showMessage(
+          `🎉 Perfekt! Ihr Termin wurde bestätigt.<br>
+           📅 <strong>7. September 2025 um ${time} Uhr</strong><br>
+           📋 Überprüfung: ${items.join(' und ')}<br>
+           📧 Bestätigung wurde an ${email} gesendet.`,
+          'success'
+        );
+
+        resetForm();
+        updateAdminStats();
+        loadBookingsTable();
+      } catch (err) {
+        console.error('Booking error:', err);
+        showMessage('❌ Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.', 'error');
+      } finally {
+        setSubmitLoading(false);
+        updateSubmitButton();
+      }
+    });
+
+    /********************
+     * ADMIN
+     ********************/
+    const adminModal = document.getElementById('adminModal');
+    document.getElementById('openAdminBtn').addEventListener('click', () => {
+      adminModal.style.display = 'flex';
+      adminModal.setAttribute('aria-hidden', 'false');
+    });
+    document.getElementById('closeAdminBtn').addEventListener('click', () => {
+      adminModal.style.display = 'none';
+      adminModal.setAttribute('aria-hidden', 'true');
+      document.getElementById('passwordForm').style.display = 'block';
+      document.getElementById('adminContent').style.display = 'none';
+      document.getElementById('adminPassword').value = '';
+    });
+    document.getElementById('adminLoginBtn').addEventListener('click', () => {
+      const password = document.getElementById('adminPassword').value;
+      if (password === ADMIN_PASSWORD) {
+        document.getElementById('passwordForm').style.display = 'none';
+        document.getElementById('adminContent').style.display = 'block';
+        updateAdminStats();
+        loadBookingsTable();
+      } else {
+        alert('❌ Falsches Passwort!');
+        document.getElementById('adminPassword').value = '';
+      }
+    });
+
+    /********************
+     * INIT
+     ********************/
+    document.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      disableBookedOptions();
+      updateSubmitButton();
+    });
+  </script>
 </body>
 </html>
