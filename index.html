@@ -394,7 +394,8 @@
         });
         
         if (!res.ok) {
-          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+          const errorText = await res.text();
+          throw new Error(`HTTP ${res.status}: ${errorText}`);
         }
         
         let result;
@@ -405,7 +406,7 @@
         }
         
         if (result.status !== 'success') {
-          throw new Error(result?.message || 'Serverfehler.');
+          throw new Error(result?.message || 'Serverfehler: ' + JSON.stringify(result));
         }
         
         return result;
@@ -497,7 +498,7 @@
         loadBookingsTable();
       } catch (err) {
         console.error('Booking error:', err);
-        showMessage('❌ Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.', 'error');
+        showMessage('❌ Ошибка: ' + (err.message || 'Неизвестная ошибка'), 'error');
       } finally {
         setSubmitLoading(false);
       }
