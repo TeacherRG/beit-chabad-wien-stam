@@ -77,30 +77,12 @@
       </ul>
     </div>
 
-
-
     <form id="bookingForm" novalidate>
       <div class="form-group">
         <label for="time">🕐 Wählen Sie Ihre gewünschte Uhrzeit *</label>
         <select id="time" name="time" required>
+          <!-- Optionen werden dynamisch aus dem Backend geladen -->
           <option value="">Bitte wählen Sie eine Zeit</option>
-          <option value="10:00">10:00 Uhr</option>
-          <option value="10:30">10:30 Uhr</option>
-          <option value="11:00">11:00 Uhr</option>
-          <option value="11:30">11:30 Uhr</option>
-          <option value="12:00">12:00 Uhr</option>
-          <option value="12:30">12:30 Uhr</option>
-          <option value="13:00">13:00 Uhr</option>
-          <option value="13:30">13:30 Uhr</option>
-          <option value="14:00">14:00 Uhr</option>
-          <option value="14:30">14:30 Uhr</option>
-          <option value="15:00">15:00 Uhr</option>
-          <option value="15:30">15:30 Uhr</option>
-          <option value="16:00">16:00 Uhr</option>
-          <option value="16:30">16:30 Uhr</option>
-          <option value="17:00">17:00 Uhr</option>
-          <option value="17:30">17:30 Uhr</option>
-          <option value="18:00">18:00 Uhr</option>
         </select>
       </div>
 
@@ -225,8 +207,10 @@
     /********************
      * CONFIG
      ********************/
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx56-sSDB0H8khsK3_XAmt0ipfS-3lr-Qw78iRz2TznMuwpPV77UfpoY76GkFpg-91Uww/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx56-sSDB0H8khsK3_XAmt0ipfS-3lr-Qw78iRz2TznMuwpPV77UfpoY76GkFpg-91Uww/exec'; // <-- ваш URL /exec
     const ADMIN_PASSWORD = 'mezuzot2025';
+    // фиксированная дата события (как в инфобоксе): 7. September 2025
+    const EVENT_DATE_YMD = '2025-09-07'; // YYYY-MM-DD
 
     /********************
      * STATE
@@ -236,17 +220,13 @@
     let isAuthenticated = false;
 
     /********************
-     * MAIN FUNCTIONS
+     * UI HELPERS
      ********************/
     function toggleCheckbox(type) {
       const checkbox = document.getElementById(type);
       const checkboxItem = checkbox.closest('.checkbox-item');
       const quantityDiv = document.getElementById(type + 'Quantity');
-      
-      // Toggle checkbox state
       checkbox.checked = !checkbox.checked;
-      
-      // Update visual state
       if (checkbox.checked) {
         checkboxItem.classList.add('selected');
         quantityDiv.classList.add('show');
@@ -254,18 +234,13 @@
         checkboxItem.classList.remove('selected');
         quantityDiv.classList.remove('show');
       }
-      
-      // Update submit button
       updateSubmitButton();
     }
 
     function formatDateTime(date) {
       return new Date(date).toLocaleString('de-DE', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
       });
     }
 
@@ -291,64 +266,6 @@
       }
     }
 
-    function disableBookedOptions() {
-      const timeSelect = document.getElementById('time');
-      [...timeSelect.options].forEach(opt => {
-        if (!opt.value) return;
-        opt.disabled = bookedTimes.includes(opt.value);
-        if (opt.disabled) {
-          opt.textContent = opt.textContent.replace(' (Belegt)', '') + ' (Belegt)';
-        }
-      });
-    }
-
-    function updateAdminStats() {
-      const totalMezuzot = bookingsData.reduce((sum, b) => sum + (b.mezuzot ? b.mezuzotCount : 0), 0);
-      const totalTefillin = bookingsData.reduce((sum, b) => sum + (b.tefillin ? b.tefillinCount : 0), 0);
-      const availableSlots = 17 - bookedTimes.length;
-
-      document.getElementById('totalBookings').textContent = bookingsData.length;
-      document.getElementById('mezuzotTotal').textContent = totalMezuzot;
-      document.getElementById('tefillinTotal').textContent = totalTefillin;
-      document.getElementById('availableSlots').textContent = Math.max(availableSlots, 0);
-    }
-
-    function loadBookingsTable() {
-      const tbody = document.getElementById('bookingsTableBody');
-      tbody.innerHTML = '';
-
-      if (bookingsData.length === 0) {
-        const row = document.createElement('tr');
-        row.innerHTML = '<td colspan="8" style="text-align:center;color:#666;">Noch keine Termine</td>';
-        tbody.appendChild(row);
-        return;
-      }
-
-      const sorted = [...bookingsData].sort((a, b) => new Date(b.bookingDate) - new Date(a.bookingDate));
-      for (const booking of sorted) {
-        const items = [];
-        if (booking.mezuzot) items.push('Mezuzot');
-        if (booking.tefillin) items.push('Tefillin');
-
-        const quantities = [];
-        if (booking.mezuzot) quantities.push(`${booking.mezuzotCount} M`);
-        if (booking.tefillin) quantities.push(`${booking.tefillinCount} T`);
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${formatDateTime(booking.bookingDate)}</td>
-          <td><strong>${booking.name}</strong></td>
-          <td><a href="mailto:${booking.email}">${booking.email}</a></td>
-          <td>${booking.phone || 'Nicht angegeben'}</td>
-          <td><strong>7.9.2025 - ${booking.time}</strong></td>
-          <td>${items.join(', ') || '—'}</td>
-          <td>${quantities.join(', ') || '—'}</td>
-          <td>${booking.notes || 'Keine'}</td>
-        `;
-        tbody.appendChild(tr);
-      }
-    }
-
     function updateSubmitButton() {
       const time = document.getElementById('time').value;
       const mezuzotChecked = document.getElementById('mezuzot').checked;
@@ -358,10 +275,10 @@
 
       const btn = document.getElementById('submitBtn');
       const isValid = time && (mezuzotChecked || tefillinChecked) && name && email;
-      const isTimeAvailable = !bookedTimes.includes(time);
-      
+      const isTimeAvailable = time && !bookedTimes.includes(time);
+
       btn.disabled = !isValid || !isTimeAvailable;
-      
+
       if (time && !isTimeAvailable) {
         btn.innerHTML = '❌ Termin bereits vergeben';
         btn.disabled = true;
@@ -383,32 +300,96 @@
     }
 
     /********************
-     * BACKEND
+     * SLOTS
+     ********************/
+    function generateSlots(startStr, endStr, stepMin) {
+      const slots = [];
+      const [sh, sm] = startStr.split(":").map(Number);
+      const [eh, em] = endStr.split(":").map(Number);
+      const start = sh*60 + sm;
+      const end   = eh*60 + em;
+      for (let m = start; m < end; m += stepMin) {
+        const hh = String(Math.floor(m/60)).padStart(2,"0");
+        const mm = String(m%60).padStart(2,"0");
+        slots.push(`${hh}:${mm}`);
+      }
+      return slots;
+    }
+
+    async function fetchBusy(dateStr) {
+      const res = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'getBusy', date: dateStr })
+      });
+      const raw = await res.text();
+      let json;
+      try { json = JSON.parse(raw); } catch { throw new Error('Ungültige Antwort vom Server.'); }
+      if (json.status !== 'success') throw new Error(json.message || 'Serverfehler');
+      return json; // { busy, free }
+    }
+
+    async function loadAndRenderTimeOptions() {
+      const select = document.getElementById('time');
+      select.innerHTML = '<option value="">Bitte wählen Sie eine Zeit</option>';
+
+      try {
+        const { busy } = await fetchBusy(EVENT_DATE_YMD);
+        bookedTimes = busy.slice(); // копируем для проверки кнопки
+        const all = generateSlots('10:00', '18:00', 30);
+
+        for (const t of all) {
+          const opt = document.createElement('option');
+          opt.value = t;
+          opt.textContent = busy.includes(t) ? `${t} (Belegt)` : t;
+          opt.disabled = busy.includes(t);
+          select.appendChild(opt);
+        }
+      } catch (e) {
+        console.error(e);
+        // На случай ошибки — хотя бы покажем список без блокировок
+        const all = generateSlots('10:00', '18:00', 30);
+        for (const t of all) {
+          const opt = document.createElement('option');
+          opt.value = t; opt.textContent = t;
+          select.appendChild(opt);
+        }
+        showMessage('Hinweis: Konnte aktuelle Verfügbarkeit nicht laden.', 'error');
+      } finally {
+        updateSubmitButton();
+      }
+    }
+
+    function disableBookedOptions() {
+      // вызывается после успешной брони — обновим подписи в select
+      const sel = document.getElementById('time');
+      [...sel.options].forEach(opt => {
+        if (!opt.value) return;
+        opt.disabled = bookedTimes.includes(opt.value);
+        if (opt.disabled && !opt.textContent.includes('(Belegt)')) {
+          opt.textContent = opt.textContent + ' (Belegt)';
+        }
+      });
+    }
+
+    /********************
+     * BACKEND COMMUNICATION
      ********************/
     async function submitToGoogleSheets(data) {
       try {
         const res = await fetch(SCRIPT_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'text/plain' },
+          headers: { 'Content-Type': 'text/plain' }, // ВАЖНО: text/plain (без CORS-префлайта)
           body: JSON.stringify(data)
         });
-        
-        if (!res.ok) {
-          const errorText = await res.text();
-          throw new Error(`HTTP ${res.status}: ${errorText}`);
-        }
-        
+
+        const raw = await res.text();
         let result;
-        try {
-          result = await res.json();
-        } catch (e) {
-          throw new Error('Ungültige Antwort vom Server.');
-        }
-        
+        try { result = JSON.parse(raw); } catch { throw new Error('Ungültige Antwort vom Server.'); }
+
         if (result.status !== 'success') {
           throw new Error(result?.message || 'Serverfehler: ' + JSON.stringify(result));
         }
-        
         return result;
       } catch (error) {
         console.error('Submission error:', error);
@@ -419,27 +400,22 @@
     /********************
      * EVENT HANDLERS
      ********************/
-    // Form validation
     document.getElementById('time').addEventListener('change', updateSubmitButton);
     document.getElementById('name').addEventListener('input', updateSubmitButton);
     document.getElementById('email').addEventListener('input', updateSubmitButton);
 
-    // Quantity inputs
     ['mezuzotCount', 'tefillinCount'].forEach(id => {
       const element = document.getElementById(id);
       element.addEventListener('input', (e) => {
         const max = parseInt(e.target.max);
         const min = parseInt(e.target.min);
         let value = parseInt(e.target.value);
-        
         if (value > max) e.target.value = max;
         if (value < min) e.target.value = min;
-        
         updateSubmitButton();
       });
     });
 
-    // Submit form
     document.getElementById('bookingForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -453,33 +429,29 @@
       const phone = document.getElementById('phone').value.trim();
       const notes = document.getElementById('notes').value.trim();
 
-      // Validation
       if (!time) return showMessage('Bitte wählen Sie eine Uhrzeit.', 'error');
       if (!(mezuzot || tefillin)) return showMessage('Bitte wählen Sie mindestens eine Prüfung.', 'error');
       if (!name) return showMessage('Bitte geben Sie Ihren Namen ein.', 'error');
       if (!email) return showMessage('Bitte geben Sie Ihre E-Mail ein.', 'error');
-      if (!validateEmail(email)) return showMessage('Bitte geben Sie eine gültige E-Mail ein.', 'error');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showMessage('Bitte geben Sie eine gültige E-Mail ein.', 'error');
       if (bookedTimes.includes(time)) return showMessage('Dieser Termin ist bereits vergeben. Bitte wählen Sie eine andere Zeit.', 'error');
 
       const formData = {
-        time, mezuzot, tefillin,
-        mezuzotCount, tefillinCount,
+        bookingDate: EVENT_DATE_YMD, // фиксированная дата события
+        time,
         name, email, phone, notes,
-        timestamp: new Date().toISOString(),
-        bookingDate: new Date().toISOString()
+        mezuzot, mezuzotCount,
+        tefillin, tefillinCount
       };
 
       setSubmitLoading(true);
-
       try {
         await submitToGoogleSheets(formData);
 
-        // Update local state
-        bookingsData.push({ id: Date.now(), ...formData });
+        // Локально отметим слот занятым и обновим select
         bookedTimes.push(time);
-
-        // Update UI
         disableBookedOptions();
+
         const items = [
           mezuzot ? `${mezuzotCount} Mezuzot` : null,
           tefillin ? `${tefillinCount} Tefillin` : null
@@ -493,28 +465,25 @@
           'success'
         );
 
-        resetForm();
-        updateAdminStats();
-        loadBookingsTable();
+        // обновим кнопки/валидность
+        updateSubmitButton();
       } catch (err) {
         console.error('Booking error:', err);
-        showMessage('❌ Ошибка: ' + (err.message || 'Неизвестная ошибка'), 'error');
+        showMessage('❌ Fehler: ' + (err.message || 'Unbekannter Fehler'), 'error');
       } finally {
         setSubmitLoading(false);
       }
     });
 
     /********************
-     * ADMIN PANEL
+     * ADMIN PANEL (без изменений)
      ********************/
     const adminModal = document.getElementById('adminModal');
-    
     document.getElementById('openAdminBtn').addEventListener('click', () => {
       adminModal.style.display = 'flex';
       adminModal.setAttribute('aria-hidden', 'false');
       document.getElementById('adminPassword').focus();
     });
-    
     document.getElementById('closeAdminBtn').addEventListener('click', () => {
       adminModal.style.display = 'none';
       adminModal.setAttribute('aria-hidden', 'true');
@@ -523,13 +492,9 @@
       document.getElementById('adminPassword').value = '';
       isAuthenticated = false;
     });
-    
     document.getElementById('adminPassword').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        document.getElementById('adminLoginBtn').click();
-      }
+      if (e.key === 'Enter') document.getElementById('adminLoginBtn').click();
     });
-    
     document.getElementById('adminLoginBtn').addEventListener('click', () => {
       const password = document.getElementById('adminPassword').value;
       if (password === ADMIN_PASSWORD) {
@@ -544,19 +509,58 @@
         document.getElementById('adminPassword').focus();
       }
     });
-
     adminModal.addEventListener('click', (e) => {
-      if (e.target === adminModal) {
-        document.getElementById('closeAdminBtn').click();
-      }
+      if (e.target === adminModal) document.getElementById('closeAdminBtn').click();
     });
+
+    function updateAdminStats() {
+      const totalMezuzot = bookingsData.reduce((sum, b) => sum + (b.mezuzot ? b.mezuzotCount : 0), 0);
+      const totalTefillin = bookingsData.reduce((sum, b) => sum + (b.tefillin ? b.tefillinCount : 0), 0);
+      const availableSlots = 17 - bookedTimes.length;
+      document.getElementById('totalBookings').textContent = bookingsData.length;
+      document.getElementById('mezuzotTotal').textContent = totalMezuzot;
+      document.getElementById('tefillinTotal').textContent = totalTefillin;
+      document.getElementById('availableSlots').textContent = Math.max(availableSlots, 0);
+    }
+
+    function loadBookingsTable() {
+      const tbody = document.getElementById('bookingsTableBody');
+      tbody.innerHTML = '';
+      if (bookingsData.length === 0) {
+        const row = document.createElement('tr');
+        row.innerHTML = '<td colspan="8" style="text-align:center;color:#666;">Noch keine Termine</td>';
+        tbody.appendChild(row);
+        return;
+      }
+      const sorted = [...bookingsData].sort((a, b) => new Date(b.bookingDate) - new Date(a.bookingDate));
+      for (const booking of sorted) {
+        const items = [];
+        if (booking.mezuzot) items.push('Mezuzot');
+        if (booking.tefillin) items.push('Tefillin');
+        const quantities = [];
+        if (booking.mezuzot) quantities.push(`${booking.mezuzotCount} M`);
+        if (booking.tefillin) quantities.push(`${booking.tefillinCount} T`);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${formatDateTime(booking.bookingDate)}</td>
+          <td><strong>${booking.name}</strong></td>
+          <td><a href="mailto:${booking.email}">${booking.email}</a></td>
+          <td>${booking.phone || 'Nicht angegeben'}</td>
+          <td><strong>7.9.2025 - ${booking.time}</strong></td>
+          <td>${items.join(', ') || '—'}</td>
+          <td>${quantities.join(', ') || '—'}</td>
+          <td>${booking.notes || 'Keine'}</td>
+        `;
+        tbody.appendChild(tr);
+      }
+    }
 
     /********************
      * INIT
      ********************/
     document.addEventListener('DOMContentLoaded', () => {
-      disableBookedOptions();
-      updateSubmitButton();
+      // Загружаем занятость и строим список времени
+      loadAndRenderTimeOptions();
     });
   </script>
 </body>
