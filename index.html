@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Mezuzot & Tefillin Prüfung - Wien</title>
   <style>
-    /* === your existing styles unchanged (trimmed for brevity) === */
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
     .container{background:#fff;border-radius:20px;box-shadow:0 20px 40px rgba(0,0,0,.1);padding:40px;max-width:500px;width:100%;animation:slideUp .6s ease-out}
@@ -57,6 +56,7 @@
     .stat-card{background:#f7fafc;padding:20px;border-radius:12px;text-align:center}
     .stat-number{font-size:24px;font-weight:bold;color:#667eea}
     .stat-label{font-size:14px;color:#666;margin-top:5px}
+    .offline-warning{background:#fef5e7;border:2px solid #f6ad55;color:#c05621;padding:15px;border-radius:12px;margin-bottom:20px;text-align:center;display:none}
     @media (max-width:600px){.container{padding:30px 20px;margin:10px}.quantity-group{grid-template-columns:1fr}.admin-content{width:95%;padding:20px}.bookings-table{font-size:14px}.stats{grid-template-columns:1fr 1fr}}
   </style>
 </head>
@@ -77,12 +77,13 @@
       </ul>
     </div>
 
+
+
     <form id="bookingForm" novalidate>
       <div class="form-group">
         <label for="time">🕐 Wählen Sie Ihre gewünschte Uhrzeit *</label>
         <select id="time" name="time" required>
           <option value="">Bitte wählen Sie eine Zeit</option>
-          <!-- 17 Slots: 10:00–18:00 im 30-Min-Takt -->
           <option value="10:00">10:00 Uhr</option>
           <option value="10:30">10:30 Uhr</option>
           <option value="11:00">11:00 Uhr</option>
@@ -106,11 +107,11 @@
       <div class="form-group">
         <label>📋 Was möchten Sie überprüfen lassen? *</label>
         <div class="checkbox-group">
-          <div class="checkbox-item" data-target="mezuzotQuantity">
+          <div class="checkbox-item" onclick="toggleCheckbox('mezuzot')">
             <input type="checkbox" id="mezuzot" name="items" value="mezuzot" />
             <label for="mezuzot">🏠 Mezuzot</label>
           </div>
-          <div class="checkbox-item" data-target="tefillinQuantity">
+          <div class="checkbox-item" onclick="toggleCheckbox('tefillin')">
             <input type="checkbox" id="tefillin" name="items" value="tefillin" />
             <label for="tefillin">📿 Tefillin</label>
           </div>
@@ -126,7 +127,7 @@
           </div>
           <div class="quantity-item" id="tefillinQuantity">
             <label for="tefillinCount">Anzahl Tefillin (max. 2)</label>
-            <input type="number" id="tefillinCount" name="tefillinCount" min="1" max="10" value="1" />
+            <input type="number" id="tefillinCount" name="tefillinCount" min="1" max="2" value="1" />
           </div>
         </div>
       </div>
@@ -225,38 +226,39 @@
      * CONFIG
      ********************/
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxIGDSwQ6UWebJnbsK_f68fCzFd0hrBw9e2b46ehUS9Cd3IduggUxWmGaV6spghitUFIQ/exec';
-    // TODO: Move this server-side; client-side passwords are not secure.
     const ADMIN_PASSWORD = 'mezuzot2025';
 
     /********************
-     * STATE (with persistence)
+     * STATE
      ********************/
     let bookingsData = [];
     let bookedTimes = [];
-
-    const LS_KEYS = {
-      bookings: 'mezuzot_bookings_v1',
-      bookedTimes: 'mezuzot_booked_times_v1'
-    };
-
-    function loadState() {
-      try {
-        bookingsData = JSON.parse(localStorage.getItem(LS_KEYS.bookings)) || [];
-        bookedTimes = JSON.parse(localStorage.getItem(LS_KEYS.bookedTimes)) || [];
-      } catch {
-        bookingsData = [];
-        bookedTimes = [];
-      }
-    }
-
-    function saveState() {
-      localStorage.setItem(LS_KEYS.bookings, JSON.stringify(bookingsData));
-      localStorage.setItem(LS_KEYS.bookedTimes, JSON.stringify(bookedTimes));
-    }
+    let isAuthenticated = false;
 
     /********************
-     * UTIL
+     * MAIN FUNCTIONS
      ********************/
+    function toggleCheckbox(type) {
+      const checkbox = document.getElementById(type);
+      const checkboxItem = checkbox.closest('.checkbox-item');
+      const quantityDiv = document.getElementById(type + 'Quantity');
+      
+      // Toggle checkbox state
+      checkbox.checked = !checkbox.checked;
+      
+      // Update visual state
+      if (checkbox.checked) {
+        checkboxItem.classList.add('selected');
+        quantityDiv.classList.add('show');
+      } else {
+        checkboxItem.classList.remove('selected');
+        quantityDiv.classList.remove('show');
+      }
+      
+      // Update submit button
+      updateSubmitButton();
+    }
+
     function formatDateTime(date) {
       return new Date(date).toLocaleString('de-DE', {
         day: '2-digit',
@@ -285,6 +287,7 @@
         btn.disabled = true;
       } else {
         btn.innerHTML = btn.dataset.prevText || '📝 Termin vereinbaren';
+        updateSubmitButton();
       }
     }
 
@@ -293,6 +296,9 @@
       [...timeSelect.options].forEach(opt => {
         if (!opt.value) return;
         opt.disabled = bookedTimes.includes(opt.value);
+        if (opt.disabled) {
+          opt.textContent = opt.textContent.replace(' (Belegt)', '') + ' (Belegt)';
+        }
       });
     }
 
@@ -351,7 +357,17 @@
       const email = document.getElementById('email').value.trim();
 
       const btn = document.getElementById('submitBtn');
-      btn.disabled = !(time && (mezuzotChecked || tefillinChecked) && name && email);
+      const isValid = time && (mezuzotChecked || tefillinChecked) && name && email;
+      const isTimeAvailable = !bookedTimes.includes(time);
+      
+      btn.disabled = !isValid || !isTimeAvailable;
+      
+      if (time && !isTimeAvailable) {
+        btn.innerHTML = '❌ Termin bereits vergeben';
+        btn.disabled = true;
+      } else if (!btn.innerHTML.includes('Wird gesendet')) {
+        btn.innerHTML = '📝 Termin vereinbaren';
+      }
     }
 
     function resetForm() {
@@ -361,57 +377,68 @@
       updateSubmitButton();
     }
 
+    function validateEmail(email) {
+      const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return re.test(email);
+    }
+
     /********************
-     * BACKEND CALL
+     * BACKEND
      ********************/
     async function submitToGoogleSheets(data) {
-      const res = await fetch(SCRIPT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      let result;
       try {
-        result = await res.json();
-      } catch {
-        throw new Error('Ungültige Antwort vom Server.');
+        const res = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        
+        let result;
+        try {
+          result = await res.json();
+        } catch (e) {
+          throw new Error('Ungültige Antwort vom Server.');
+        }
+        
+        if (result.status !== 'success') {
+          throw new Error(result?.message || 'Serverfehler.');
+        }
+        
+        return result;
+      } catch (error) {
+        console.error('Submission error:', error);
+        throw new Error('Fehler beim Senden der Daten. Bitte versuchen Sie es erneut.');
       }
-      if (!res.ok || result.status !== 'success') {
-        throw new Error(result?.message || 'Serverfehler.');
-      }
-      return result;
     }
 
     /********************
      * EVENT HANDLERS
      ********************/
-    // Toggle checkbox + quantity visibility (delegate to handle both)
-    document.querySelectorAll('.checkbox-item').forEach(item => {
-      item.addEventListener('click', (e) => {
-        // prevent double toggle when clicking the input itself
-        if (e.target.tagName.toLowerCase() === 'input') return;
-        const input = item.querySelector('input[type="checkbox"]');
-        input.checked = !input.checked;
-
-        const targetId = item.getAttribute('data-target');
-        const quantityEl = document.getElementById(targetId);
-        item.classList.toggle('selected', input.checked);
-        quantityEl.classList.toggle('show', input.checked);
-
-        updateSubmitButton();
-      });
-    });
-
-    // Keep buttons state in sync
+    // Form validation
     document.getElementById('time').addEventListener('change', updateSubmitButton);
     document.getElementById('name').addEventListener('input', updateSubmitButton);
     document.getElementById('email').addEventListener('input', updateSubmitButton);
 
-    // Also update when quantities change (for validation)
-    document.getElementById('mezuzotCount').addEventListener('input', updateSubmitButton);
-    document.getElementById('tefillinCount').addEventListener('input', updateSubmitButton);
+    // Quantity inputs
+    ['mezuzotCount', 'tefillinCount'].forEach(id => {
+      const element = document.getElementById(id);
+      element.addEventListener('input', (e) => {
+        const max = parseInt(e.target.max);
+        const min = parseInt(e.target.min);
+        let value = parseInt(e.target.value);
+        
+        if (value > max) e.target.value = max;
+        if (value < min) e.target.value = min;
+        
+        updateSubmitButton();
+      });
+    });
 
-    // Submit
+    // Submit form
     document.getElementById('bookingForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -419,16 +446,19 @@
       const mezuzot = document.getElementById('mezuzot').checked;
       const tefillin = document.getElementById('tefillin').checked;
       const mezuzotCount = mezuzot ? Math.max(1, Math.min(5, parseInt(document.getElementById('mezuzotCount').value || '1', 10))) : 0;
-      const tefillinCount = tefillin ? Math.max(1, Math.min(10, parseInt(document.getElementById('tefillinCount').value || '1', 10))) : 0;
+      const tefillinCount = tefillin ? Math.max(1, Math.min(2, parseInt(document.getElementById('tefillinCount').value || '1', 10))) : 0;
       const name = document.getElementById('name').value.trim();
       const email = document.getElementById('email').value.trim();
       const phone = document.getElementById('phone').value.trim();
       const notes = document.getElementById('notes').value.trim();
 
-      // Guardrails
+      // Validation
       if (!time) return showMessage('Bitte wählen Sie eine Uhrzeit.', 'error');
-      if (!(mezuzot || tefillin)) return showMessage('Bitte wählen Sie mindestens eine Prüfung (Mezuzot oder Tefillin).', 'error');
-      if (bookedTimes.includes(time)) return showMessage('Dieser Termin ist soeben vergeben worden. Bitte wählen Sie eine andere Zeit.', 'error');
+      if (!(mezuzot || tefillin)) return showMessage('Bitte wählen Sie mindestens eine Prüfung.', 'error');
+      if (!name) return showMessage('Bitte geben Sie Ihren Namen ein.', 'error');
+      if (!email) return showMessage('Bitte geben Sie Ihre E-Mail ein.', 'error');
+      if (!validateEmail(email)) return showMessage('Bitte geben Sie eine gültige E-Mail ein.', 'error');
+      if (bookedTimes.includes(time)) return showMessage('Dieser Termin ist bereits vergeben. Bitte wählen Sie eine andere Zeit.', 'error');
 
       const formData = {
         time, mezuzot, tefillin,
@@ -441,15 +471,13 @@
       setSubmitLoading(true);
 
       try {
-        // 1) Persist remotely
         await submitToGoogleSheets(formData);
 
-        // 2) Update local state
+        // Update local state
         bookingsData.push({ id: Date.now(), ...formData });
         bookedTimes.push(time);
-        saveState();
 
-        // 3) Update UI
+        // Update UI
         disableBookedOptions();
         const items = [
           mezuzot ? `${mezuzotCount} Mezuzot` : null,
@@ -472,35 +500,53 @@
         showMessage('❌ Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.', 'error');
       } finally {
         setSubmitLoading(false);
-        updateSubmitButton();
       }
     });
 
     /********************
-     * ADMIN
+     * ADMIN PANEL
      ********************/
     const adminModal = document.getElementById('adminModal');
+    
     document.getElementById('openAdminBtn').addEventListener('click', () => {
       adminModal.style.display = 'flex';
       adminModal.setAttribute('aria-hidden', 'false');
+      document.getElementById('adminPassword').focus();
     });
+    
     document.getElementById('closeAdminBtn').addEventListener('click', () => {
       adminModal.style.display = 'none';
       adminModal.setAttribute('aria-hidden', 'true');
       document.getElementById('passwordForm').style.display = 'block';
       document.getElementById('adminContent').style.display = 'none';
       document.getElementById('adminPassword').value = '';
+      isAuthenticated = false;
     });
+    
+    document.getElementById('adminPassword').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('adminLoginBtn').click();
+      }
+    });
+    
     document.getElementById('adminLoginBtn').addEventListener('click', () => {
       const password = document.getElementById('adminPassword').value;
       if (password === ADMIN_PASSWORD) {
+        isAuthenticated = true;
         document.getElementById('passwordForm').style.display = 'none';
         document.getElementById('adminContent').style.display = 'block';
         updateAdminStats();
         loadBookingsTable();
       } else {
-        alert('❌ Falsches Passwort!');
+        showMessage('❌ Falsches Passwort!', 'error');
         document.getElementById('adminPassword').value = '';
+        document.getElementById('adminPassword').focus();
+      }
+    });
+
+    adminModal.addEventListener('click', (e) => {
+      if (e.target === adminModal) {
+        document.getElementById('closeAdminBtn').click();
       }
     });
 
@@ -508,7 +554,6 @@
      * INIT
      ********************/
     document.addEventListener('DOMContentLoaded', () => {
-      loadState();
       disableBookedOptions();
       updateSubmitButton();
     });
