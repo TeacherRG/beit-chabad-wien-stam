@@ -1,567 +1,238 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Mezuzot & Tefillin Prüfung - Wien</title>
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-    .container{background:#fff;border-radius:20px;box-shadow:0 20px 40px rgba(0,0,0,.1);padding:40px;max-width:500px;width:100%;animation:slideUp .6s ease-out}
-    @keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
-    .header{text-align:center;margin-bottom:30px}
-    .header h1{color:#2d3748;font-size:28px;margin-bottom:8px;font-weight:700}
-    .header p{color:#718096;font-size:16px}
-    .form-group{margin-bottom:25px}
-    label{display:block;margin-bottom:8px;color:#2d3748;font-weight:600;font-size:14px}
-    input,select,textarea{width:100%;padding:12px 16px;border:2px solid #e2e8f0;border-radius:12px;font-size:16px;transition:.3s;background:#f7fafc}
-    input:focus,select:focus,textarea:focus{outline:none;border-color:#667eea;background:#fff;box-shadow:0 0 0 3px rgba(102,126,234,.1)}
-    .checkbox-group{display:flex;flex-direction:column;gap:15px;margin-top:10px}
-    .checkbox-item{display:flex;align-items:center;padding:15px 20px;border:2px solid #e2e8f0;border-radius:12px;background:#f7fafc;cursor:pointer;transition:.3s}
-    .checkbox-item:hover{border-color:#667eea;background:#edf2f7;transform:translateY(-2px)}
-    .checkbox-item.selected{border-color:#667eea;background:#667eea;color:#fff;box-shadow:0 4px 12px rgba(102,126,234,.3)}
-    .checkbox-item input[type="checkbox"]{width:auto;margin-right:12px;transform:scale(1.2)}
-    .checkbox-item label{margin:0;cursor:pointer;font-weight:500;font-size:16px}
-    .quantity-group{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:15px}
-    .quantity-item{display:none;animation:slideDown .3s ease-out}
-    .quantity-item.show{display:block}
-    @keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
-    .quantity-item label{font-size:14px;color:#4a5568;margin-bottom:5px}
-    .quantity-item input{text-align:center;font-weight:bold}
-    .submit-btn{width:100%;padding:15px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;transition:.3s;margin-top:20px}
-    .submit-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 25px rgba(102,126,234,.4)}
-    .submit-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
-    .success-message{background:#c6f6d5;color:#22543d;padding:15px 20px;border-radius:12px;margin-top:20px;text-align:center;font-weight:500;border:2px solid #9ae6b4}
-    .error-message{background:#fed7d7;color:#c53030;padding:15px 20px;border-radius:12px;margin-top:20px;text-align:center;font-weight:500;border:2px solid #fc8181}
-    .loading{display:inline-block;width:20px;height:20px;border:3px solid #fff;border-radius:50%;border-top-color:transparent;animation:spin 1s ease-in-out infinite;margin-right:10px}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    .info-box{background:#ebf8ff;border:2px solid #90cdf4;border-radius:12px;padding:20px;margin-bottom:25px;color:#2a4365}
-    .info-box h3{margin-bottom:10px;color:#2c5282}
-    .info-box ul{list-style-position:inside;line-height:1.6}
-    .admin-panel{position:fixed;top:20px;right:20px;z-index:1000}
-    .admin-btn{background:#2d3748;color:#fff;border:none;border-radius:50%;width:50px;height:50px;cursor:pointer;font-size:18px;box-shadow:0 4px 12px rgba(0,0,0,.3);transition:.3s}
-    .admin-btn:hover{background:#4a5568;transform:scale(1.1)}
-    .admin-modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.8);z-index:2000;display:none;align-items:center;justify-content:center}
-    .admin-content{background:#fff;border-radius:20px;padding:30px;max-width:800px;width:90%;max-height:80vh;overflow-y:auto}
-    .admin-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
-    .close-btn{background:none;border:none;font-size:24px;cursor:pointer;color:#666}
-    .bookings-table{width:100%;border-collapse:collapse;margin-top:20px}
-    .bookings-table th,.bookings-table td{padding:12px;text-align:left;border-bottom:1px solid #e2e8f0}
-    .bookings-table th{background:#f7fafc;font-weight:600}
-    .bookings-table tbody tr:hover{background:#f7fafc}
-    .password-form{text-align:center;padding:20px}
-    .password-input{padding:12px;border:2px solid #e2e8f0;border-radius:8px;margin:10px;font-size:16px}
-    .login-btn{background:#667eea;color:#fff;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-size:16px}
-    .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px;margin-bottom:20px}
-    .stat-card{background:#f7fafc;padding:20px;border-radius:12px;text-align:center}
-    .stat-number{font-size:24px;font-weight:bold;color:#667eea}
-    .stat-label{font-size:14px;color:#666;margin-top:5px}
-    .offline-warning{background:#fef5e7;border:2px solid #f6ad55;color:#c05621;padding:15px;border-radius:12px;margin-bottom:20px;text-align:center;display:none}
-    @media (max-width:600px){.container{padding:30px 20px;margin:10px}.quantity-group{grid-template-columns:1fr}.admin-content{width:95%;padding:20px}.bookings-table{font-size:14px}.stats{grid-template-columns:1fr 1fr}}
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>📿 Mezuzot & Tefillin Prüfung</h1>
-      <p>Professionelle Überprüfung in Wien</p>
-    </div>
+const HEADERS = [
+  "Datum", "Uhrzeit", "Name", "E-Mail", "Telefon",
+  "Anmerkungen", "Mezuzot Anzahl", "Tefillin Anzahl"
+];
 
-    <div class="info-box">
-      <h3>ℹ️ Informationen zum Termin:</h3>
-      <ul>
-        <li><strong>Datum:</strong> 7. September 2025</li>
-        <li><strong>Zeit:</strong> 10:00 - 18:00 Uhr</li>
-        <li><strong>Ort:</strong> Wien, Österreich</li>
-        <li><strong>Dauer:</strong> ~30 Minuten pro Überprüfung</li>
-      </ul>
-    </div>
+function doPost(e) {
+  try {
+    console.log("Входящий запрос:", e?.postData?.contents || "пустой");
+    if (!e || !e.postData || !e.postData.contents) {
+      return jsonOut({ status: "error", message: "Пустое тело запроса" });
+    }
 
-    <form id="bookingForm" novalidate>
-      <div class="form-group">
-        <label for="time">🕐 Wählen Sie Ihre gewünschte Uhrzeit *</label>
-        <select id="time" name="time" required>
-          <!-- Optionen werden dynamisch aus dem Backend geladen -->
-          <option value="">Bitte wählen Sie eine Zeit</option>
-        </select>
-      </div>
+    const data = JSON.parse(e.postData.contents || "{}");
+    console.log("Разобранные данные:", data);
 
-      <div class="form-group">
-        <label>📋 Was möchten Sie überprüfen lassen? *</label>
-        <div class="checkbox-group">
-          <div class="checkbox-item" onclick="toggleCheckbox('mezuzot')">
-            <input type="checkbox" id="mezuzot" name="items" value="mezuzot" />
-            <label for="mezuzot">🏠 Mezuzot</label>
-          </div>
-          <div class="checkbox-item" onclick="toggleCheckbox('tefillin')">
-            <input type="checkbox" id="tefillin" name="items" value="tefillin" />
-            <label for="tefillin">📿 Tefillin</label>
-          </div>
-        </div>
-      </div>
+    // Принимаем ТОЛЬКО явные action
+    if (!data.action) {
+      return jsonOut({ status: "error", message: "Unknown or missing action" });
+    }
 
-      <div class="form-group">
-        <label>🔢 Wie viele möchten Sie überprüfen lassen?</label>
-        <div class="quantity-group">
-          <div class="quantity-item" id="mezuzotQuantity">
-            <label for="mezuzotCount">Anzahl Mezuzot (max. 5)</label>
-            <input type="number" id="mezuzotCount" name="mezuzotCount" min="1" max="5" value="1" />
-          </div>
-          <div class="quantity-item" id="tefillinQuantity">
-            <label for="tefillinCount">Anzahl Tefillin (max. 2)</label>
-            <input type="number" id="tefillinCount" name="tefillinCount" min="1" max="2" value="1" />
-          </div>
-        </div>
-      </div>
+    const sheet = getSheetAndEnsureHeaders();
 
-      <div class="form-group">
-        <label for="name">👤 Ihr Name *</label>
-        <input type="text" id="name" name="name" required placeholder="Vor- und Nachname" />
-      </div>
+    if (data.action === "getBusy") {
+      if (!data.date) return jsonOut({ status: "error", message: "Не передана date (YYYY-MM-DD)" });
+      const busy = getBusyTimesForDate(sheet, String(data.date));
+      const free = generateFreeSlots(busy || []);
+      console.log("Возвращаем занятые слоты:", busy);
+      return jsonOut({ status: "success", busy: Array.isArray(busy) ? busy : [], free });
+    }
 
-      <div class="form-group">
-        <label for="email">📧 E-Mail *</label>
-        <input type="email" id="email" name="email" required placeholder="ihre.email@beispiel.com" />
-      </div>
+    if (data.action === "getBookings") {
+      const bookings = getAllBookings(sheet);
+      return jsonOut({ status: "success", bookings });
+    }
 
-      <div class="form-group">
-        <label for="phone">📱 Telefonnummer</label>
-        <input type="tel" id="phone" name="phone" placeholder="+43 xxx xxx xxxx" />
-      </div>
+    if (data.action === "addBooking") {
+      return addBookingRow(sheet, data);
+    }
 
-      <div class="form-group">
-        <label for="notes">💭 Besondere Wünsche oder Anmerkungen</label>
-        <textarea id="notes" name="notes" rows="3" placeholder="Teilen Sie uns mit, falls Sie besondere Wünsche haben..."></textarea>
-      </div>
+    // Любое другое действие — отклоняем
+    return jsonOut({ status: "error", message: "Unknown action: " + data.action });
 
-      <button type="submit" class="submit-btn" id="submitBtn" disabled>📝 Termin vereinbaren</button>
-    </form>
+  } catch (err) {
+    console.error("Backend error:", err);
+    return jsonOut({ status: "error", message: "Ошибка сервера: " + String(err) });
+  }
+}
 
-    <div id="message" aria-live="polite"></div>
-  </div>
+/* -------------------- Таблица и заголовки -------------------- */
+function getSheetAndEnsureHeaders() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheets()[0];
 
-  <!-- Admin-Panel -->
-  <div class="admin-panel">
-    <button class="admin-btn" id="openAdminBtn" title="Admin-Panel">⚙️</button>
-  </div>
+  console.log("Проверяем и настраиваем заголовки...");
+  const lastRow = sheet.getLastRow();
+  const lastCol = sheet.getLastColumn();
 
-  <!-- Admin Modal -->
-  <div class="admin-modal" id="adminModal" aria-hidden="true">
-    <div class="admin-content">
-      <div class="admin-header">
-        <h2>👨‍💻 Admin-Panel</h2>
-        <button class="close-btn" id="closeAdminBtn" aria-label="Schließen">✕</button>
-      </div>
+  if (lastRow === 0) {
+    console.log("Таблица пустая, устанавливаем заголовки");
+    sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
+    return sheet;
+  }
 
-      <!-- Login Form -->
-      <div id="passwordForm" class="password-form">
-        <h3>Passwort eingeben</h3>
-        <input type="password" id="adminPassword" class="password-input" placeholder="Passwort"/>
-        <br/>
-        <button class="login-btn" id="adminLoginBtn">Anmelden</button>
-      </div>
+  const currentHeaders = sheet.getRange(1, 1, 1, Math.max(lastCol, HEADERS.length)).getValues()[0];
+  let needUpdate = false;
 
-      <!-- Admin Content -->
-      <div id="adminContent" style="display:none;">
-        <div class="stats">
-          <div class="stat-card">
-            <div class="stat-number" id="totalBookings">0</div>
-            <div class="stat-label">Termine gesamt</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number" id="mezuzotTotal">0</div>
-            <div class="stat-label">Mezuzot gesamt</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number" id="tefillinTotal">0</div>
-            <div class="stat-label">Tefillin gesamt</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number" id="availableSlots">17</div>
-            <div class="stat-label">Freie Termine</div>
-          </div>
-        </div>
+  if (currentHeaders.length < HEADERS.length) needUpdate = true;
+  else {
+    for (let i = 0; i < HEADERS.length; i++) {
+      if (String(currentHeaders[i] || "").trim() !== HEADERS[i]) { needUpdate = true; break; }
+    }
+  }
 
-        <table class="bookings-table">
-          <thead>
-            <tr>
-              <th>Anmeldung</th>
-              <th>Name</th>
-              <th>E-Mail</th>
-              <th>Telefon</th>
-              <th>Termin</th>
-              <th>Prüfung</th>
-              <th>Anzahl</th>
-              <th>Anmerkungen</th>
-            </tr>
-          </thead>
-          <tbody id="bookingsTableBody">
-            <tr><td colspan="8" style="text-align:center;color:#666;">Noch keine Termine</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+  if (needUpdate) {
+    sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
+    if (lastCol > HEADERS.length) {
+      sheet.getRange(1, HEADERS.length + 1, 1, lastCol - HEADERS.length).clearContent();
+    }
+  }
+  return sheet;
+}
 
-  <script>
-    /********************
-     * CONFIG
-     ********************/
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxijjfZzgNUhUlCgABBOW2FKQGyJODFLa6HzMtI5dFZpdsgq1U3hvxZk_Rl9M8NnJYFgg/exec'; // <-- ваш URL /exec
-    const ADMIN_PASSWORD = 'mezuzot2025';
-    // фиксированная дата события (как в инфобоксе): 7. September 2025
-    const EVENT_DATE_YMD = '2025-09-07'; // YYYY-MM-DD
+/* -------------------- Занятость и слоты -------------------- */
+function getBusyTimesForDate(sheet, ymd) {
+  try {
+    const lastRow = sheet.getLastRow();
+    const lastCol = sheet.getLastColumn();
+    if (lastRow < 2) return [];
 
-    /********************
-     * STATE
-     ********************/
-    let bookingsData = [];
-    let bookedTimes = [];
-    let isAuthenticated = false;
+    const allHeaders = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    const colDate = allHeaders.findIndex(h => String(h).toLowerCase().includes('datum')) + 1;
+    const colTime = allHeaders.findIndex(h => String(h).toLowerCase().includes('uhrzeit')) + 1;
+    const colName = allHeaders.findIndex(h => String(h).toLowerCase().includes('name')) + 1;
+    const colEmail = allHeaders.findIndex(h => String(h).toLowerCase().includes('mail')) + 1;
+    if (colDate <= 0 || colTime <= 0) return [];
 
-    /********************
-     * UI HELPERS
-     ********************/
-    function toggleCheckbox(type) {
-      const checkbox = document.getElementById(type);
-      const checkboxItem = checkbox.closest('.checkbox-item');
-      const quantityDiv = document.getElementById(type + 'Quantity');
-      checkbox.checked = !checkbox.checked;
-      if (checkbox.checked) {
-        checkboxItem.classList.add('selected');
-        quantityDiv.classList.add('show');
+    const allData = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
+    const busySet = new Set();
+
+    for (let i = 0; i < allData.length; i++) {
+      const row = allData[i];
+      const d = row[colDate - 1];
+      const t = row[colTime - 1];
+      const name = colName > 0 ? row[colName - 1] : null;
+      const email = colEmail > 0 ? row[colEmail - 1] : null;
+
+      if (!d || !t) continue;
+      const hasName = name && String(name).trim() !== '';
+      const hasEmail = email && String(email).trim() !== '';
+      if (!hasName && !hasEmail) continue; // фильтр мусора/полупустых строк
+
+      let rowYMD;
+      if (d instanceof Date) {
+        rowYMD = Utilities.formatDate(d, Session.getScriptTimeZone(), "yyyy-MM-dd");
       } else {
-        checkboxItem.classList.remove('selected');
-        quantityDiv.classList.remove('show');
-      }
-      updateSubmitButton();
-    }
-
-    function formatDateTime(date) {
-      return new Date(date).toLocaleString('de-DE', {
-        day: '2-digit', month: '2-digit', year: 'numeric',
-        hour: '2-digit', minute: '2-digit'
-      });
-    }
-
-    function showMessage(text, type) {
-      const messageDiv = document.getElementById('message');
-      messageDiv.className = type === 'error' ? 'error-message' : 'success-message';
-      messageDiv.innerHTML = text;
-      setTimeout(() => {
-        messageDiv.innerHTML = '';
-        messageDiv.className = '';
-      }, 15000);
-    }
-
-    function setSubmitLoading(loading) {
-      const btn = document.getElementById('submitBtn');
-      if (loading) {
-        btn.dataset.prevText = btn.innerHTML;
-        btn.innerHTML = '<span class="loading"></span>Wird gesendet...';
-        btn.disabled = true;
-      } else {
-        btn.innerHTML = btn.dataset.prevText || '📝 Termin vereinbaren';
-        updateSubmitButton();
-      }
-    }
-
-    function updateSubmitButton() {
-      const time = document.getElementById('time').value;
-      const mezuzotChecked = document.getElementById('mezuzot').checked;
-      const tefillinChecked = document.getElementById('tefillin').checked;
-      const name = document.getElementById('name').value.trim();
-      const email = document.getElementById('email').value.trim();
-
-      const btn = document.getElementById('submitBtn');
-      const isValid = time && (mezuzotChecked || tefillinChecked) && name && email;
-      const isTimeAvailable = time && !bookedTimes.includes(time);
-
-      btn.disabled = !isValid || !isTimeAvailable;
-
-      if (time && !isTimeAvailable) {
-        btn.innerHTML = '❌ Termin bereits vergeben';
-        btn.disabled = true;
-      } else if (!btn.innerHTML.includes('Wird gesendet')) {
-        btn.innerHTML = '📝 Termin vereinbaren';
-      }
-    }
-
-    function resetForm() {
-      document.getElementById('bookingForm').reset();
-      document.querySelectorAll('.checkbox-item').forEach(item => item.classList.remove('selected'));
-      document.querySelectorAll('.quantity-item').forEach(item => item.classList.remove('show'));
-      updateSubmitButton();
-    }
-
-    function validateEmail(email) {
-      const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      return re.test(email);
-    }
-
-    /********************
-     * SLOTS
-     ********************/
-    function generateSlots(startStr, endStr, stepMin) {
-      const slots = [];
-      const [sh, sm] = startStr.split(":").map(Number);
-      const [eh, em] = endStr.split(":").map(Number);
-      const start = sh*60 + sm;
-      const end   = eh*60 + em;
-      for (let m = start; m < end; m += stepMin) {
-        const hh = String(Math.floor(m/60)).padStart(2,"0");
-        const mm = String(m%60).padStart(2,"0");
-        slots.push(`${hh}:${mm}`);
-      }
-      return slots;
-    }
-
-    async function fetchBusy(dateStr) {
-      const res = await fetch(SCRIPT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ action: 'getBusy', date: dateStr })
-      });
-      const raw = await res.text();
-      let json;
-      try { json = JSON.parse(raw); } catch { throw new Error('Ungültige Antwort vom Server.'); }
-      if (json.status !== 'success') throw new Error(json.message || 'Serverfehler');
-      return json; // { busy, free }
-    }
-
-    async function loadAndRenderTimeOptions() {
-      const select = document.getElementById('time');
-      select.innerHTML = '<option value="">Bitte wählen Sie eine Zeit</option>';
-
-      try {
-        const { busy } = await fetchBusy(EVENT_DATE_YMD);
-        bookedTimes = busy.slice(); // копируем для проверки кнопки
-        const all = generateSlots('10:00', '18:00', 30);
-
-        for (const t of all) {
-          const opt = document.createElement('option');
-          opt.value = t;
-          opt.textContent = busy.includes(t) ? `${t} (Belegt)` : t;
-          opt.disabled = busy.includes(t);
-          select.appendChild(opt);
+        const dateStr = String(d).trim();
+        if (dateStr.includes('.')) {
+          const parts = dateStr.split('.');
+          if (parts.length === 3) {
+            rowYMD = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+          } else rowYMD = dateStr;
+        } else {
+          rowYMD = dateStr;
         }
-      } catch (e) {
-        console.error(e);
-        // На случай ошибки — хотя бы покажем список без блокировок
-        const all = generateSlots('10:00', '18:00', 30);
-        for (const t of all) {
-          const opt = document.createElement('option');
-          opt.value = t; opt.textContent = t;
-          select.appendChild(opt);
-        }
-        showMessage('Hinweis: Konnte aktuelle Verfügbarkeit nicht laden.', 'error');
-      } finally {
-        updateSubmitButton();
       }
+
+      if (rowYMD === ymd) busySet.add(String(t).trim());
     }
 
-    function disableBookedOptions() {
-      // вызывается после успешной брони — обновим подписи в select
-      const sel = document.getElementById('time');
-      [...sel.options].forEach(opt => {
-        if (!opt.value) return;
-        opt.disabled = bookedTimes.includes(opt.value);
-        if (opt.disabled && !opt.textContent.includes('(Belegt)')) {
-          opt.textContent = opt.textContent + ' (Belegt)';
-        }
-      });
+    return Array.from(busySet);
+  } catch (error) {
+    console.error("Ошибка getBusyTimesForDate:", error);
+    return [];
+  }
+}
+
+function generateFreeSlots(busyTimes) {
+  const busySet = new Set(Array.isArray(busyTimes) ? busyTimes : []);
+  const allSlots = [];
+  for (let h = 10; h < 18; h++) {
+    for (let m = 0; m < 60; m += 30) {
+      const t = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+      if (!busySet.has(t)) allSlots.push(t);
     }
+  }
+  return allSlots;
+}
 
-    /********************
-     * BACKEND COMMUNICATION
-     ********************/
-    async function submitToGoogleSheets(data) {
-      try {
-        const res = await fetch(SCRIPT_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain' }, // ВАЖНО: text/plain (без CORS-префлайта)
-          body: JSON.stringify(data)
-        });
+/* -------------------- Запись брони -------------------- */
+function addBookingRow(sheet, data) {
+  try {
+    console.log("=== СОЗДАНИЕ БРОНИРОВАНИЯ ===", JSON.stringify(data));
 
-        const raw = await res.text();
-        let result;
-        try { result = JSON.parse(raw); } catch { throw new Error('Ungültige Antwort vom Server.'); }
-
-        if (result.status !== 'success') {
-          throw new Error(result?.message || 'Serverfehler: ' + JSON.stringify(result));
-        }
-        return result;
-      } catch (error) {
-        console.error('Submission error:', error);
-        throw new Error('Fehler beim Senden der Daten. Bitte versuchen Sie es erneut.');
+    // валидация
+    const required = ["bookingDate","time","name","email"];
+    for (const k of required) {
+      if (!data[k] || String(data[k]).trim() === '') {
+        return jsonOut({ status: "error", message: `Поле ${k} обязательно` });
       }
     }
-
-    /********************
-     * EVENT HANDLERS
-     ********************/
-    document.getElementById('time').addEventListener('change', updateSubmitButton);
-    document.getElementById('name').addEventListener('input', updateSubmitButton);
-    document.getElementById('email').addEventListener('input', updateSubmitButton);
-
-    ['mezuzotCount', 'tefillinCount'].forEach(id => {
-      const element = document.getElementById(id);
-      element.addEventListener('input', (e) => {
-        const max = parseInt(e.target.max);
-        const min = parseInt(e.target.min);
-        let value = parseInt(e.target.value);
-        if (value > max) e.target.value = max;
-        if (value < min) e.target.value = min;
-        updateSubmitButton();
-      });
-    });
-
-    document.getElementById('bookingForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const time = document.getElementById('time').value;
-      const mezuzot = document.getElementById('mezuzot').checked;
-      const tefillin = document.getElementById('tefillin').checked;
-      const mezuzotCount = mezuzot ? Math.max(1, Math.min(5, parseInt(document.getElementById('mezuzotCount').value || '1', 10))) : 0;
-      const tefillinCount = tefillin ? Math.max(1, Math.min(2, parseInt(document.getElementById('tefillinCount').value || '1', 10))) : 0;
-      const name = document.getElementById('name').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const phone = document.getElementById('phone').value.trim();
-      const notes = document.getElementById('notes').value.trim();
-
-      if (!time) return showMessage('Bitte wählen Sie eine Uhrzeit.', 'error');
-      if (!(mezuzot || tefillin)) return showMessage('Bitte wählen Sie mindestens eine Prüfung.', 'error');
-      if (!name) return showMessage('Bitte geben Sie Ihren Namen ein.', 'error');
-      if (!email) return showMessage('Bitte geben Sie Ihre E-Mail ein.', 'error');
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showMessage('Bitte geben Sie eine gültige E-Mail ein.', 'error');
-      if (bookedTimes.includes(time)) return showMessage('Dieser Termin ist bereits vergeben. Bitte wählen Sie eine andere Zeit.', 'error');
-
-      const formData = {
-        bookingDate: EVENT_DATE_YMD, // фиксированная дата события
-        time,
-        name, email, phone, notes,
-        mezuzot, mezuzotCount,
-        tefillin, tefillinCount
-      };
-
-      setSubmitLoading(true);
-      try {
-        await submitToGoogleSheets(formData);
-
-        // Локально отметим слот занятым и обновим select
-        bookedTimes.push(time);
-        disableBookedOptions();
-
-        const items = [
-          mezuzot ? `${mezuzotCount} Mezuzot` : null,
-          tefillin ? `${tefillinCount} Tefillin` : null
-        ].filter(Boolean);
-
-        showMessage(
-          `🎉 Perfekt! Ihr Termin wurde bestätigt.<br>
-           📅 <strong>7. September 2025 um ${time} Uhr</strong><br>
-           📋 Überprüfung: ${items.join(' und ')}<br>
-           📧 Bestätigung wurde an ${email} gesendet.`,
-          'success'
-        );
-
-        // обновим кнопки/валидность
-        updateSubmitButton();
-      } catch (err) {
-        console.error('Booking error:', err);
-        showMessage('❌ Fehler: ' + (err.message || 'Unbekannter Fehler'), 'error');
-      } finally {
-        setSubmitLoading(false);
-      }
-    });
-
-    /********************
-     * ADMIN PANEL (без изменений)
-     ********************/
-    const adminModal = document.getElementById('adminModal');
-    document.getElementById('openAdminBtn').addEventListener('click', () => {
-      adminModal.style.display = 'flex';
-      adminModal.setAttribute('aria-hidden', 'false');
-      document.getElementById('adminPassword').focus();
-    });
-    document.getElementById('closeAdminBtn').addEventListener('click', () => {
-      adminModal.style.display = 'none';
-      adminModal.setAttribute('aria-hidden', 'true');
-      document.getElementById('passwordForm').style.display = 'block';
-      document.getElementById('adminContent').style.display = 'none';
-      document.getElementById('adminPassword').value = '';
-      isAuthenticated = false;
-    });
-    document.getElementById('adminPassword').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') document.getElementById('adminLoginBtn').click();
-    });
-    document.getElementById('adminLoginBtn').addEventListener('click', () => {
-      const password = document.getElementById('adminPassword').value;
-      if (password === ADMIN_PASSWORD) {
-        isAuthenticated = true;
-        document.getElementById('passwordForm').style.display = 'none';
-        document.getElementById('adminContent').style.display = 'block';
-        updateAdminStats();
-        loadBookingsTable();
-      } else {
-        showMessage('❌ Falsches Passwort!', 'error');
-        document.getElementById('adminPassword').value = '';
-        document.getElementById('adminPassword').focus();
-      }
-    });
-    adminModal.addEventListener('click', (e) => {
-      if (e.target === adminModal) document.getElementById('closeAdminBtn').click();
-    });
-
-    function updateAdminStats() {
-      const totalMezuzot = bookingsData.reduce((sum, b) => sum + (b.mezuzot ? b.mezuzotCount : 0), 0);
-      const totalTefillin = bookingsData.reduce((sum, b) => sum + (b.tefillin ? b.tefillinCount : 0), 0);
-      const availableSlots = 17 - bookedTimes.length;
-      document.getElementById('totalBookings').textContent = bookingsData.length;
-      document.getElementById('mezuzotTotal').textContent = totalMezuzot;
-      document.getElementById('tefillinTotal').textContent = totalTefillin;
-      document.getElementById('availableSlots').textContent = Math.max(availableSlots, 0);
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(String(data.email))) {
+      return jsonOut({ status: "error", message: "Неверный формат email" });
     }
 
-    function loadBookingsTable() {
-      const tbody = document.getElementById('bookingsTableBody');
-      tbody.innerHTML = '';
-      if (bookingsData.length === 0) {
-        const row = document.createElement('tr');
-        row.innerHTML = '<td colspan="8" style="text-align:center;color:#666;">Noch keine Termine</td>';
-        tbody.appendChild(row);
-        return;
-      }
-      const sorted = [...bookingsData].sort((a, b) => new Date(b.bookingDate) - new Date(a.bookingDate));
-      for (const booking of sorted) {
-        const items = [];
-        if (booking.mezuzot) items.push('Mezuzot');
-        if (booking.tefillin) items.push('Tefillin');
-        const quantities = [];
-        if (booking.mezuzot) quantities.push(`${booking.mezuzotCount} M`);
-        if (booking.tefillin) quantities.push(`${booking.tefillinCount} T`);
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${formatDateTime(booking.bookingDate)}</td>
-          <td><strong>${booking.name}</strong></td>
-          <td><a href="mailto:${booking.email}">${booking.email}</a></td>
-          <td>${booking.phone || 'Nicht angegeben'}</td>
-          <td><strong>7.9.2025 - ${booking.time}</strong></td>
-          <td>${items.join(', ') || '—'}</td>
-          <td>${quantities.join(', ') || '—'}</td>
-          <td>${booking.notes || 'Keine'}</td>
-        `;
-        tbody.appendChild(tr);
-      }
+    const mezCount = data.mezuzot ? Math.max(1, Math.min(5, parseInt(data.mezuzotCount)||1)) : 0;
+    const tefCount = data.tefillin ? Math.max(1, Math.min(2, parseInt(data.tefillinCount)||1)) : 0;
+    if (mezCount === 0 && tefCount === 0) {
+      return jsonOut({ status: "error", message: "Выберите хотя бы одну услугу" });
     }
 
-    /********************
-     * INIT
-     ********************/
-    document.addEventListener('DOMContentLoaded', () => {
-      // Загружаем занятость и строим список времени
-      loadAndRenderTimeOptions();
+    // защита от дубля времени
+    const busy = getBusyTimesForDate(sheet, String(data.bookingDate));
+    const requestedTime = String(data.time).trim();
+    if (busy.includes(requestedTime)) {
+      return jsonOut({ status: "error", message: "Этот временной слот уже занят" });
+    }
+
+    const bookingRow = [
+      toDateFormatted(data.bookingDate),             // Datum
+      requestedTime,                                 // Uhrzeit
+      String(data.name).trim(),                      // Name
+      String(data.email).trim(),                     // E-Mail
+      String(data.phone || "").trim(),               // Telefon
+      String(data.notes || "").trim(),               // Anmerkungen
+      toInt(mezCount),                               // Mezuzot Anzahl
+      toInt(tefCount)                                // Tefillin Anzahl
+    ];
+
+    const nextRow = Math.max(2, sheet.getLastRow() + 1);
+    sheet.getRange(nextRow, 1, 1, HEADERS.length).setValues([bookingRow]);
+
+    return jsonOut({
+      status: "success",
+      message: "Бронирование успешно создано",
+      data: { row: nextRow, time: bookingRow[1], date: bookingRow[0] }
     });
-  </script>
-</body>
-</html>
+
+  } catch (error) {
+    console.error("Ошибка создания бронирования:", error);
+    return jsonOut({ status: "error", message: "Ошибка записи в таблицу: " + String(error) });
+  }
+}
+
+/* -------------------- Вспомогательные -------------------- */
+function jsonOut(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function toDateFormatted(dateStr) {
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return String(dateStr);
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth()+1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    return `${dd}.${mm}.${yyyy}`;
+  } catch (_) { return String(dateStr); }
+}
+
+function toInt(v) { const n = Number(v); return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0; }
+
+function doGet(e) {
+  return jsonOut({ status: "error", message: "Используйте POST и action" });
+}
+
+function getAllBookings(sheet) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return [];
+  const values = sheet.getRange(2, 1, lastRow - 1, HEADERS.length).getValues();
+  return values.map(r => ({
+    bookingDate: r[0], time: r[1], name: r[2], email: r[3],
+    phone: r[4], notes: r[5],
+    mezuzotCount: r[6], tefillinCount: r[7],
+    mezuzot: (r[6]||0) > 0, tefillin: (r[7]||0) > 0
+  }));
+}
