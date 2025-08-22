@@ -1,238 +1,178 @@
-const HEADERS = [
-  "Datum", "Uhrzeit", "Name", "E-Mail", "Telefon",
-  "Anmerkungen", "Mezuzot Anzahl", "Tefillin Anzahl"
-];
-
-function doPost(e) {
-  try {
-    console.log("Входящий запрос:", e?.postData?.contents || "пустой");
-    if (!e || !e.postData || !e.postData.contents) {
-      return jsonOut({ status: "error", message: "Пустое тело запроса" });
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Terminbuchung</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      margin: 0; padding: 20px;
     }
-
-    const data = JSON.parse(e.postData.contents || "{}");
-    console.log("Разобранные данные:", data);
-
-    // Принимаем ТОЛЬКО явные action
-    if (!data.action) {
-      return jsonOut({ status: "error", message: "Unknown or missing action" });
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
-
-    const sheet = getSheetAndEnsureHeaders();
-
-    if (data.action === "getBusy") {
-      if (!data.date) return jsonOut({ status: "error", message: "Не передана date (YYYY-MM-DD)" });
-      const busy = getBusyTimesForDate(sheet, String(data.date));
-      const free = generateFreeSlots(busy || []);
-      console.log("Возвращаем занятые слоты:", busy);
-      return jsonOut({ status: "success", busy: Array.isArray(busy) ? busy : [], free });
+    h1 { text-align: center; margin-bottom: 20px; }
+    label { display: block; margin-top: 10px; font-weight: bold; }
+    input, select, textarea, button {
+      width: 100%; padding: 8px; margin-top: 5px;
+      border: 1px solid #ccc; border-radius: 5px;
     }
-
-    if (data.action === "getBookings") {
-      const bookings = getAllBookings(sheet);
-      return jsonOut({ status: "success", bookings });
+    fieldset { margin-top: 15px; padding: 10px; }
+    legend { font-weight: bold; }
+    button {
+      background: #007BFF; color: white;
+      font-size: 16px; cursor: pointer; margin-top: 15px;
     }
+    button:hover { background: #0056b3; }
+    #result { margin-top: 15px; font-weight: bold; text-align: center; }
+    option:disabled { color: #999; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Termin buchen</h1>
+    <form id="buchungForm">
+      <label for="datum">Datum:</label>
+      <input type="date" id="datum" name="datum" required>
 
-    if (data.action === "addBooking") {
-      return addBookingRow(sheet, data);
+      <label for="zeit">Uhrzeit:</label>
+      <select id="zeit" name="zeit" required>
+        <option value="">Bitte wählen...</option>
+      </select>
+
+      <label for="name">Name:</label>
+      <input type="text" id="name" name="name" required>
+
+      <label for="email">E-Mail:</label>
+      <input type="email" id="email" name="email" required>
+
+      <label for="telefon">Telefon:</label>
+      <input type="text" id="telefon" name="telefon">
+
+      <label for="anmerkungen">Anmerkungen:</label>
+      <textarea id="anmerkungen" name="anmerkungen"></textarea>
+
+      <fieldset>
+        <legend>Services</legend>
+        <label>
+          <input type="checkbox" id="mezuzot" name="mezuzot"> Mezuzot
+        </label>
+        <input type="number" id="mezuzotCount" name="mezuzotCount" min="1" max="5" value="1">
+
+        <label>
+          <input type="checkbox" id="tefillin" name="tefillin"> Tefillin
+        </label>
+        <input type="number" id="tefillinCount" name="tefillinCount" min="1" max="2" value="1">
+      </fieldset>
+
+      <button type="submit">Bestätigen</button>
+    </form>
+
+    <div id="result"></div>
+  </div>
+
+  <script>
+  const SCRIPT_URL = "HIER_EURE_APPS_SCRIPT_URL_EINFÜGEN"; // замените на свой /exec
+
+  // Slots generieren (10:00–18:00, alle 30 Minuten)
+  function generateSlots() {
+    const slots = [];
+    for (let h = 10; h < 18; h++) {
+      for (let m = 0; m < 60; m += 30) {
+        slots.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
+      }
     }
-
-    // Любое другое действие — отклоняем
-    return jsonOut({ status: "error", message: "Unknown action: " + data.action });
-
-  } catch (err) {
-    console.error("Backend error:", err);
-    return jsonOut({ status: "error", message: "Ошибка сервера: " + String(err) });
+    return slots;
   }
-}
 
-/* -------------------- Таблица и заголовки -------------------- */
-function getSheetAndEnsureHeaders() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheets()[0];
+  // Slots in Select rendern
+  function renderSlots(allSlots, busy) {
+    const select = document.getElementById("zeit");
+    select.innerHTML = "";
+    const busySet = new Set(busy);
 
-  console.log("Проверяем и настраиваем заголовки...");
-  const lastRow = sheet.getLastRow();
-  const lastCol = sheet.getLastColumn();
-
-  if (lastRow === 0) {
-    console.log("Таблица пустая, устанавливаем заголовки");
-    sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
-    return sheet;
-  }
-
-  const currentHeaders = sheet.getRange(1, 1, 1, Math.max(lastCol, HEADERS.length)).getValues()[0];
-  let needUpdate = false;
-
-  if (currentHeaders.length < HEADERS.length) needUpdate = true;
-  else {
-    for (let i = 0; i < HEADERS.length; i++) {
-      if (String(currentHeaders[i] || "").trim() !== HEADERS[i]) { needUpdate = true; break; }
-    }
-  }
-
-  if (needUpdate) {
-    sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
-    if (lastCol > HEADERS.length) {
-      sheet.getRange(1, HEADERS.length + 1, 1, lastCol - HEADERS.length).clearContent();
-    }
-  }
-  return sheet;
-}
-
-/* -------------------- Занятость и слоты -------------------- */
-function getBusyTimesForDate(sheet, ymd) {
-  try {
-    const lastRow = sheet.getLastRow();
-    const lastCol = sheet.getLastColumn();
-    if (lastRow < 2) return [];
-
-    const allHeaders = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
-    const colDate = allHeaders.findIndex(h => String(h).toLowerCase().includes('datum')) + 1;
-    const colTime = allHeaders.findIndex(h => String(h).toLowerCase().includes('uhrzeit')) + 1;
-    const colName = allHeaders.findIndex(h => String(h).toLowerCase().includes('name')) + 1;
-    const colEmail = allHeaders.findIndex(h => String(h).toLowerCase().includes('mail')) + 1;
-    if (colDate <= 0 || colTime <= 0) return [];
-
-    const allData = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
-    const busySet = new Set();
-
-    for (let i = 0; i < allData.length; i++) {
-      const row = allData[i];
-      const d = row[colDate - 1];
-      const t = row[colTime - 1];
-      const name = colName > 0 ? row[colName - 1] : null;
-      const email = colEmail > 0 ? row[colEmail - 1] : null;
-
-      if (!d || !t) continue;
-      const hasName = name && String(name).trim() !== '';
-      const hasEmail = email && String(email).trim() !== '';
-      if (!hasName && !hasEmail) continue; // фильтр мусора/полупустых строк
-
-      let rowYMD;
-      if (d instanceof Date) {
-        rowYMD = Utilities.formatDate(d, Session.getScriptTimeZone(), "yyyy-MM-dd");
+    allSlots.forEach(time => {
+      const opt = document.createElement("option");
+      opt.value = time;
+      if (busySet.has(time)) {
+        opt.textContent = `${time} (Belegt)`;
+        opt.disabled = true;
       } else {
-        const dateStr = String(d).trim();
-        if (dateStr.includes('.')) {
-          const parts = dateStr.split('.');
-          if (parts.length === 3) {
-            rowYMD = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
-          } else rowYMD = dateStr;
-        } else {
-          rowYMD = dateStr;
-        }
+        opt.textContent = time;
       }
-
-      if (rowYMD === ymd) busySet.add(String(t).trim());
-    }
-
-    return Array.from(busySet);
-  } catch (error) {
-    console.error("Ошибка getBusyTimesForDate:", error);
-    return [];
-  }
-}
-
-function generateFreeSlots(busyTimes) {
-  const busySet = new Set(Array.isArray(busyTimes) ? busyTimes : []);
-  const allSlots = [];
-  for (let h = 10; h < 18; h++) {
-    for (let m = 0; m < 60; m += 30) {
-      const t = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
-      if (!busySet.has(t)) allSlots.push(t);
-    }
-  }
-  return allSlots;
-}
-
-/* -------------------- Запись брони -------------------- */
-function addBookingRow(sheet, data) {
-  try {
-    console.log("=== СОЗДАНИЕ БРОНИРОВАНИЯ ===", JSON.stringify(data));
-
-    // валидация
-    const required = ["bookingDate","time","name","email"];
-    for (const k of required) {
-      if (!data[k] || String(data[k]).trim() === '') {
-        return jsonOut({ status: "error", message: `Поле ${k} обязательно` });
-      }
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(String(data.email))) {
-      return jsonOut({ status: "error", message: "Неверный формат email" });
-    }
-
-    const mezCount = data.mezuzot ? Math.max(1, Math.min(5, parseInt(data.mezuzotCount)||1)) : 0;
-    const tefCount = data.tefillin ? Math.max(1, Math.min(2, parseInt(data.tefillinCount)||1)) : 0;
-    if (mezCount === 0 && tefCount === 0) {
-      return jsonOut({ status: "error", message: "Выберите хотя бы одну услугу" });
-    }
-
-    // защита от дубля времени
-    const busy = getBusyTimesForDate(sheet, String(data.bookingDate));
-    const requestedTime = String(data.time).trim();
-    if (busy.includes(requestedTime)) {
-      return jsonOut({ status: "error", message: "Этот временной слот уже занят" });
-    }
-
-    const bookingRow = [
-      toDateFormatted(data.bookingDate),             // Datum
-      requestedTime,                                 // Uhrzeit
-      String(data.name).trim(),                      // Name
-      String(data.email).trim(),                     // E-Mail
-      String(data.phone || "").trim(),               // Telefon
-      String(data.notes || "").trim(),               // Anmerkungen
-      toInt(mezCount),                               // Mezuzot Anzahl
-      toInt(tefCount)                                // Tefillin Anzahl
-    ];
-
-    const nextRow = Math.max(2, sheet.getLastRow() + 1);
-    sheet.getRange(nextRow, 1, 1, HEADERS.length).setValues([bookingRow]);
-
-    return jsonOut({
-      status: "success",
-      message: "Бронирование успешно создано",
-      data: { row: nextRow, time: bookingRow[1], date: bookingRow[0] }
+      select.appendChild(opt);
     });
-
-  } catch (error) {
-    console.error("Ошибка создания бронирования:", error);
-    return jsonOut({ status: "error", message: "Ошибка записи в таблицу: " + String(error) });
   }
-}
 
-/* -------------------- Вспомогательные -------------------- */
-function jsonOut(obj) {
-  return ContentService.createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
-}
+  // Busy Slots vom Backend laden
+  async function loadSlotsForDate(dateStr) {
+    try {
+      const res = await fetch(SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "getBusy", date: dateStr })
+      });
+      const data = await res.json();
+      const allSlots = generateSlots();
+      renderSlots(allSlots, data.busy || []);
+    } catch (err) {
+      console.error("Fehler beim Laden der Slots:", err);
+    }
+  }
 
-function toDateFormatted(dateStr) {
-  try {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return String(dateStr);
-    const dd = String(d.getDate()).padStart(2, '0');
-    const mm = String(d.getMonth()+1).padStart(2, '0');
-    const yyyy = d.getFullYear();
-    return `${dd}.${mm}.${yyyy}`;
-  } catch (_) { return String(dateStr); }
-}
+  // Formular absenden
+  document.getElementById("buchungForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const payload = {
+      action: "addBooking",
+      bookingDate: document.getElementById("datum").value,
+      time: document.getElementById("zeit").value,
+      name: document.getElementById("name").value,
+      email: document.getElementById("email").value,
+      phone: document.getElementById("telefon").value,
+      notes: document.getElementById("anmerkungen").value,
+      mezuzot: document.getElementById("mezuzot").checked,
+      mezuzotCount: document.getElementById("mezuzotCount").value,
+      tefillin: document.getElementById("tefillin").checked,
+      tefillinCount: document.getElementById("tefillinCount").value
+    };
 
-function toInt(v) { const n = Number(v); return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0; }
+    try {
+      const res = await fetch(SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      document.getElementById("result").textContent = data.message || "Erfolgreich gebucht!";
+      if (payload.bookingDate) {
+        loadSlotsForDate(payload.bookingDate); // Slot sofort blockieren
+      }
+    } catch (err) {
+      document.getElementById("result").textContent = "Fehler bei der Buchung!";
+      console.error(err);
+    }
+  });
 
-function doGet(e) {
-  return jsonOut({ status: "error", message: "Используйте POST и action" });
-}
+  // Slots beim Datumwechsel laden
+  document.getElementById("datum").addEventListener("change", (e) => {
+    if (e.target.value) loadSlotsForDate(e.target.value);
+  });
 
-function getAllBookings(sheet) {
-  const lastRow = sheet.getLastRow();
-  if (lastRow < 2) return [];
-  const values = sheet.getRange(2, 1, lastRow - 1, HEADERS.length).getValues();
-  return values.map(r => ({
-    bookingDate: r[0], time: r[1], name: r[2], email: r[3],
-    phone: r[4], notes: r[5],
-    mezuzotCount: r[6], tefillinCount: r[7],
-    mezuzot: (r[6]||0) > 0, tefillin: (r[7]||0) > 0
-  }));
-}
+  // Heutiges Datum automatisch setzen und Slots laden
+  window.addEventListener("DOMContentLoaded", () => {
+    const dateInput = document.getElementById("datum");
+    const today = new Date().toISOString().split("T")[0];
+    dateInput.value = today;
+    loadSlotsForDate(today);
+  });
+  </script>
+</body>
+</html>
