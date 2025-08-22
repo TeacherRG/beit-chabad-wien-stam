@@ -131,8 +131,11 @@ function doGet(e) {
 
 function doPost(e) {
   var data = {};
-  if (e.postData && e.postData.contents) {
+  if (e && e.postData && e.postData.contents) {
     data = JSON.parse(e.postData.contents);
+  }
+  if (!data.action) {
+    return jsonOut({ status: 'error', message: 'No action provided' });
   }
   return doGet({ parameter: data });
 }
