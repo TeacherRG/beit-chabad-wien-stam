@@ -130,6 +130,12 @@
   // Formular absenden
   document.getElementById("buchungForm").addEventListener("submit", async (e) => {
     e.preventDefault();
+    const mezuzotSelected = document.getElementById("mezuzot").checked;
+    const tefillinSelected = document.getElementById("tefillin").checked;
+    if (!mezuzotSelected && !tefillinSelected) {
+      document.getElementById("result").textContent = "Bitte wählen Sie mindestens einen Service aus.";
+      return;
+    }
     const payload = {
       action: "addBooking",
       bookingDate: document.getElementById("datum").value,
@@ -138,9 +144,9 @@
       email: document.getElementById("email").value,
       phone: document.getElementById("telefon").value,
       notes: document.getElementById("anmerkungen").value,
-      mezuzot: document.getElementById("mezuzot").checked,
+      mezuzot: mezuzotSelected,
       mezuzotCount: document.getElementById("mezuzotCount").value,
-      tefillin: document.getElementById("tefillin").checked,
+      tefillin: tefillinSelected,
       tefillinCount: document.getElementById("tefillinCount").value
     };
 
